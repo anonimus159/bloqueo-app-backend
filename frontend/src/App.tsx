@@ -27,6 +27,7 @@ import {
   Zap,
   BarChart2,
   Activity,
+  Edit,
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -132,6 +133,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>(['Sistema listo y escuchando.', 'Servidor iniciado correctamente.']);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [saleToEdit, setSaleToEdit] = useState<CreditSale | null>(null);
   const [calDate, setCalDate] = useState(new Date());
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -669,7 +671,7 @@ export default function App() {
                               <div className="credit-device-serial">{sale.serial_number || 'Sin serie'}</div>
                             </div>
                           </div>
-                          <div className="credit-badges">
+                          <div className="credit-badges" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {sev === 'alert'   && <span className="badge badge-rose"><AlertTriangle size={9}/> +2 días mora</span>}
                             {sev === 'warning' && <span className="badge badge-amber"><Clock size={9}/> Vencida</span>}
                             {sev === 'ok'      && <span className="badge badge-emerald"><CheckCircle2 size={9}/> Al corriente</span>}
@@ -682,6 +684,17 @@ export default function App() {
                                sale.status === 'overdue'   ? 'En mora' :
                                sale.status === 'locked'    ? 'Bloqueado' : 'Activo'}
                             </span>
+                            <button
+                              className="icon-btn"
+                              title="Editar Venta"
+                              style={{ width: '22px', height: '22px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                              onClick={() => {
+                                setSaleToEdit(sale);
+                                setShowModal(true);
+                              }}
+                            >
+                              <Edit size={12}/>
+                            </button>
                           </div>
                         </div>
 
@@ -954,11 +967,61 @@ export default function App() {
       {/* ─── MODAL ────────────────────────────────────────────── */}
       {showModal && (
         <RegisterModal
-          onClose={() => setShowModal(false)}
-          onSave={sale => {
-            setSales(prev => [...prev, sale]);
+          saleToEdit={saleToEdit}
+          onClose={() => {
             setShowModal(false);
-            addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+            setSaleToEdit(null);
+          }}
+          onSave={async (sale) => {
+            if (saleToEdit) {
+              // Actualizar venta existente
+              setSales(prev => {
+                const updated = prev.map(s => s.id === saleToEdit.id ? sale : s);
+                saveSales(updated);
+                return updated;
+              });
+              addLog(`✓ Venta editada: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+            } else {
+              // Registrar nueva venta
+              setSales(prev => {
+                const updated = [...prev, sale];
+                saveSales(updated);
+                return updated;
+              });
+              addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+
+              // Vincular con el sistema backend
+              try {
+                const res = await fetch(`${API_URL}/api/v1/devices/register`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                  },
+                  body: JSON.stringify({
+                    serial_number: sale.serial_number,
+                    imei: sale.imei,
+                    brand: sale.device_brand,
+                    model: sale.device_model,
+                    customer_name: sale.customer_name,
+                    customer_phone: sale.customer_phone
+                  })
+                });
+
+                if (res.ok) {
+                  addLog(`✓ Equipo vinculado y guardado en la base de datos.`);
+                  fetchDevices();
+                } else {
+                  const errData = await res.json();
+                  addLog(`✗ Error al vincular equipo en el sistema: ${errData.error || res.statusText}`);
+                }
+              } catch (err) {
+                console.error(err);
+                addLog(`✗ Error de red al vincular el equipo con el sistema.`);
+              }
+            }
+            setShowModal(false);
+            setSaleToEdit(null);
           }}
         />
       )}
@@ -970,14 +1033,19 @@ export default function App() {
 // Register Sale Modal
 // ══════════════════════════════════════════════════════════
 
-function RegisterModal({ onClose, onSave }: { onClose: () => void; onSave: (s: CreditSale) => void }) {
+function RegisterModal({ onClose, onSave, saleToEdit }: { onClose: () => void; onSave: (s: CreditSale) => void; saleToEdit?: CreditSale | null }) {
   const [f, setF] = useState({
-    device_brand: '', device_model: '', serial_number: '', imei: '',
-    customer_name: '', customer_phone: '',
-    sale_price: '', down_payment: '0',
-    frequency: 'monthly' as PaymentFrequency,
-    total_installments: '12',
-    start_date: new Date().toISOString().split('T')[0],
+    device_brand: saleToEdit?.device_brand || '',
+    device_model: saleToEdit?.device_model || '',
+    serial_number: saleToEdit?.serial_number || '',
+    imei: saleToEdit?.imei || '',
+    customer_name: saleToEdit?.customer_name || '',
+    customer_phone: saleToEdit?.customer_phone || '',
+    sale_price: saleToEdit?.sale_price.toString() || '',
+    down_payment: saleToEdit?.down_payment.toString() || '0',
+    frequency: saleToEdit?.frequency || 'monthly' as PaymentFrequency,
+    total_installments: saleToEdit?.total_installments.toString() || '12',
+    start_date: saleToEdit?.start_date || new Date().toISOString().split('T')[0],
   });
 
   const set = (k: string, v: string) => setF(prev => ({ ...prev, [k]: v }));
@@ -997,16 +1065,18 @@ function RegisterModal({ onClose, onSave }: { onClose: () => void; onSave: (s: C
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!f.device_brand || !f.customer_name || !f.sale_price) return;
-    const insts = generateInstallments(f.start_date, f.frequency, count, quot);
+    const insts = saleToEdit && saleToEdit.total_installments === count
+      ? saleToEdit.installments
+      : generateInstallments(f.start_date, f.frequency, count, quot);
     onSave({
-      id: `sale-${Date.now()}`,
+      id: saleToEdit?.id || `sale-${Date.now()}`,
       device_brand: f.device_brand, device_model: f.device_model,
       serial_number: f.serial_number, imei: f.imei,
       customer_name: f.customer_name, customer_phone: f.customer_phone,
       sale_price: price, down_payment: down,
       frequency: f.frequency, total_installments: count,
       installment_amount: quot, start_date: f.start_date,
-      installments: insts, status: 'active',
+      installments: insts, status: saleToEdit?.status || 'active',
     });
   };
 
@@ -1016,7 +1086,7 @@ function RegisterModal({ onClose, onSave }: { onClose: () => void; onSave: (s: C
         <div className="modal-header">
           <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
             <div className="modal-header-icon"><CreditCard size={18}/></div>
-            <span>Registrar Venta a Crédito</span>
+            <span>{saleToEdit ? 'Editar Venta a Crédito' : 'Registrar Venta a Crédito'}</span>
           </div>
           <button className="icon-btn" onClick={onClose} id="modal-close"><X size={16}/></button>
         </div>
@@ -1126,7 +1196,8 @@ function RegisterModal({ onClose, onSave }: { onClose: () => void; onSave: (s: C
             onClick={handleSubmit as any}
             disabled={!f.device_brand || !f.customer_name || !f.sale_price}
           >
-            <Plus size={15}/> Registrar Venta
+            {saleToEdit ? <CheckCircle2 size={15}/> : <Plus size={15}/>}
+            {saleToEdit ? ' Guardar Cambios' : ' Registrar Venta'}
           </button>
         </div>
       </div>
