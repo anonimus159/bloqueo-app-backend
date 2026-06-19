@@ -151,6 +151,32 @@ class LockOverlayService : Service() {
         }
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Asegurar que si el sistema mata el servicio, lo reviva
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        
+        // Se ejecuta cuando el usuario desliza y quita la app de "Recientes"
+        val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+        val isLocked = prefs.getBoolean("is_locked", false)
+        
+        if (isLocked) {
+            // Relanzar el servicio
+            val restartServiceIntent = Intent(applicationContext, this.javaClass)
+            restartServiceIntent.setPackage(packageName)
+            startService(restartServiceIntent)
+            
+            // Relanzar la actividad de bloqueo
+            val restartActivityIntent = Intent(applicationContext, LockScreenActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            startActivity(restartActivityIntent)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // Remove the view when the service is destroyed

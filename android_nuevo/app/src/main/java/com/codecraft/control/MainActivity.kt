@@ -124,6 +124,23 @@ class MainActivity : Activity() {
             startActivity(intent)
             Toast.makeText(this, "Por favor activa el permiso de superposición para que el bloqueo funcione en segundo plano.", Toast.LENGTH_LONG).show()
         }
+
+        // Verificar si debe iniciarse bloqueado por persistencia (SharedPreferences)
+        val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+        if (prefs.getBoolean("is_locked", false)) {
+            try {
+                // Relanzar servicio de overlay
+                val overlayIntent = Intent(this, LockOverlayService::class.java)
+                startService(overlayIntent)
+                
+                // Relanzar la actividad de bloqueo inescapable
+                val lockIntent = Intent(this, LockScreenActivity::class.java)
+                lockIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                startActivity(lockIntent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     /**
@@ -205,7 +222,16 @@ class MainActivity : Activity() {
                     val commands = responseJson.optJSONArray("commands")
 
                     runOnUiThread {
+                        val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
                         if (status == "locked") {
+                            prefs.edit().putBoolean("is_locked", true).apply()
+
+                            // Lanzar el overlay de bloqueo inmediatamente
+                            try {
+                                val overlayIntent = Intent(this@MainActivity, LockOverlayService::class.java)
+                                startService(overlayIntent)
+                            } catch (e: Exception) {}
+
                             // Lanza nuestra actividad inescapable en modo Kiosk
                             val lockIntent = Intent(this@MainActivity, LockScreenActivity::class.java)
                             lockIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -215,6 +241,8 @@ class MainActivity : Activity() {
                             statusView.text = "Estado: SUSPENDIDO / BLOQUEADO"
                             statusView.setTextColor(android.graphics.Color.RED)
                         } else {
+                            prefs.edit().putBoolean("is_locked", false).apply()
+
                             // Si estaba en modo Kiosk, salir
                             try {
                                 stopLockTask()
