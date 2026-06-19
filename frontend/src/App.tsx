@@ -134,6 +134,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [saleToEdit, setSaleToEdit] = useState<CreditSale | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calDate, setCalDate] = useState(new Date());
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -801,9 +802,9 @@ export default function App() {
                   <div className="calendar-nav">
                     <span className="calendar-month">{MONTHS[calMonth]} {calYear}</span>
                     <div style={{ display:'flex', gap:'6px' }}>
-                      <button className="icon-btn" onClick={() => setCalDate(new Date(calYear, calMonth-1))}><ChevronLeft size={15}/></button>
-                      <button className="icon-btn" onClick={() => setCalDate(new Date())} title="Hoy" style={{ fontSize:'10px', width:'auto', padding:'0 10px' }}>Hoy</button>
-                      <button className="icon-btn" onClick={() => setCalDate(new Date(calYear, calMonth+1))}><ChevronRight size={15}/></button>
+                      <button className="icon-btn" onClick={() => { setCalDate(new Date(calYear, calMonth-1)); setSelectedDay(null); }}><ChevronLeft size={15}/></button>
+                      <button className="icon-btn" onClick={() => { setCalDate(new Date()); setSelectedDay(null); }} title="Hoy" style={{ fontSize:'10px', width:'auto', padding:'0 10px' }}>Hoy</button>
+                      <button className="icon-btn" onClick={() => { setCalDate(new Date(calYear, calMonth+1)); setSelectedDay(null); }}><ChevronRight size={15}/></button>
                     </div>
                   </div>
                   <div className="calendar-grid">
@@ -818,15 +819,48 @@ export default function App() {
                       const today = new Date();
                       const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===day;
                       const hasOv = items.some(p => !p.inst.paid && p.inst.overdue);
+                      const isSelected = selectedDay === ds;
                       return (
-                        <div key={day} className={`cal-cell ${isToday?'today':''} ${hasOv?'has-overdue-dots':''} ${items.length&&!hasOv?'has-payment-dots':''}`}>
+                        <div
+                          key={day}
+                          className={`cal-cell ${isToday?'today':''} ${hasOv?'has-overdue-dots':''} ${items.length&&!hasOv?'has-payment-dots':''}`}
+                          style={{
+                            cursor: 'pointer',
+                            outline: isSelected ? '2px solid var(--indigo)' : undefined,
+                            outlineOffset: '-2px',
+                            minHeight: '65px'
+                          }}
+                          onClick={() => setSelectedDay(isSelected ? null : ds)}
+                        >
                           <span className="cal-day-num">{day}</span>
-                          <div className="cal-dots">
-                            {items.slice(0,3).map((p, idx) => (
-                              <span key={idx} className={`cal-dot ${p.inst.paid?'green':p.inst.overdue?'red':'blue'}`}/>
+                          <div className="cal-dots" style={{ display:'flex', flexDirection:'column', gap:'2px', width:'100%', marginTop:'2px' }}>
+                            {items.slice(0, 2).map((p, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  fontSize: '8px',
+                                  lineHeight: '10px',
+                                  padding: '1px 3px',
+                                  borderRadius: '3px',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  background: p.inst.paid ? 'rgba(16, 185, 129, 0.12)' : p.inst.overdue ? 'rgba(244, 63, 94, 0.12)' : 'rgba(99, 102, 241, 0.12)',
+                                  color: p.inst.paid ? 'var(--emerald)' : p.inst.overdue ? 'var(--rose)' : 'var(--indigo-light)',
+                                  maxWidth: '100%',
+                                  textAlign: 'center'
+                                }}
+                                title={`${p.sale.customer_name} - ${p.sale.device_brand} ${p.sale.device_model}`}
+                              >
+                                {p.sale.device_brand}
+                              </div>
                             ))}
+                            {items.length > 2 && (
+                              <span style={{ fontSize:'8px', color:'var(--t3)', textAlign:'center' }}>
+                                +{items.length - 2} más
+                              </span>
+                            )}
                           </div>
-                          {items.length > 3 && <span style={{ fontSize:'9px', color:'var(--t3)' }}>+{items.length-3}</span>}
                         </div>
                       );
                     })}
@@ -834,40 +868,83 @@ export default function App() {
                 </div>
 
                 <div className="panel">
-                  <div className="panel-header">
-                    <DollarSign size={15} className="text-emerald"/>
-                    <span>Pagos de {MONTHS[calMonth]}</span>
+                  <div className="panel-header" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <DollarSign size={15} className="text-emerald"/>
+                      <span>{selectedDay ? `Pagos del ${fmtDate(selectedDay)}` : `Pagos de ${MONTHS[calMonth]}`}</span>
+                    </div>
                     <span className="panel-header-sub">
-                      {Object.entries(paysByDate).filter(([d]) => {
-                        const [y,m] = d.split('-');
-                        return +y===calYear && +m-1===calMonth;
-                      }).reduce((a,[,v])=>a+v.length,0)} cuotas
+                      {selectedDay ? (
+                        <button
+                          onClick={() => setSelectedDay(null)}
+                          style={{
+                            background: 'rgba(99, 102, 241, 0.12)',
+                            border: 'none',
+                            color: 'var(--indigo-light)',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                          }}
+                        >
+                          Ver todo el mes
+                        </button>
+                      ) : (
+                        `${Object.entries(paysByDate).filter(([d]) => {
+                          const [y,m] = d.split('-');
+                          return +y===calYear && +m-1===calMonth;
+                        }).reduce((a,[,v])=>a+v.length,0)} cuotas`
+                      )}
                     </span>
                   </div>
                   <div className="payments-list">
-                    {Object.entries(paysByDate)
-                      .filter(([d]) => { const [y,m] = d.split('-'); return +y===calYear && +m-1===calMonth; })
-                      .sort(([a],[b]) => a.localeCompare(b))
-                      .flatMap(([date, items]) =>
-                        items.map((p, idx) => (
-                          <div key={`${date}-${idx}`} className={`payment-item ${p.inst.paid?'is-paid':''} ${p.inst.overdue&&!p.inst.paid?'is-overdue':''}`}>
-                            <span className="pi-date">{fmtDate(date)}</span>
-                            <div className="pi-info">
-                              <span className="pi-name">{p.sale.customer_name}</span>
-                              <span className="pi-device">{p.sale.device_brand} {p.sale.device_model}</span>
-                            </div>
-                            <span className="pi-amount">{fmtCOP(p.inst.amount)}</span>
-                            {p.inst.paid
-                              ? <span className="badge badge-emerald"><CheckCircle2 size={9}/> Pagada</span>
-                              : p.inst.overdue
-                                ? <span className="badge badge-rose"><AlertTriangle size={9}/> {p.inst.days_overdue}d</span>
-                                : <span className="badge badge-neutral"><Clock size={9}/> Pendiente</span>
-                            }
+                    {selectedDay ? (
+                      (paysByDate[selectedDay] || []).map((p, idx) => (
+                        <div key={`${selectedDay}-${idx}`} className={`payment-item ${p.inst.paid?'is-paid':''} ${p.inst.overdue&&!p.inst.paid?'is-overdue':''}`}>
+                          <span className="pi-date">{fmtDate(selectedDay)}</span>
+                          <div className="pi-info">
+                            <span className="pi-name">{p.sale.customer_name}</span>
+                            <span className="pi-device">{p.sale.device_brand} {p.sale.device_model}</span>
                           </div>
-                        ))
-                      )
-                    }
-                    {Object.entries(paysByDate).filter(([d]) => {
+                          <span className="pi-amount">{fmtCOP(p.inst.amount)}</span>
+                          {p.inst.paid
+                            ? <span className="badge badge-emerald"><CheckCircle2 size={9}/> Pagada</span>
+                            : p.inst.overdue
+                              ? <span className="badge badge-rose"><AlertTriangle size={9}/> {p.inst.days_overdue}d</span>
+                              : <span className="badge badge-neutral"><Clock size={9}/> Pendiente</span>
+                          }
+                        </div>
+                      ))
+                    ) : (
+                      Object.entries(paysByDate)
+                        .filter(([d]) => { const [y,m] = d.split('-'); return +y===calYear && +m-1===calMonth; })
+                        .sort(([a],[b]) => a.localeCompare(b))
+                        .flatMap(([date, items]) =>
+                          items.map((p, idx) => (
+                            <div key={`${date}-${idx}`} className={`payment-item ${p.inst.paid?'is-paid':''} ${p.inst.overdue&&!p.inst.paid?'is-overdue':''}`}>
+                              <span className="pi-date">{fmtDate(date)}</span>
+                              <div className="pi-info">
+                                <span className="pi-name">{p.sale.customer_name}</span>
+                                <span className="pi-device">{p.sale.device_brand} {p.sale.device_model}</span>
+                              </div>
+                              <span className="pi-amount">{fmtCOP(p.inst.amount)}</span>
+                              {p.inst.paid
+                                ? <span className="badge badge-emerald"><CheckCircle2 size={9}/> Pagada</span>
+                                : p.inst.overdue
+                                  ? <span className="badge badge-rose"><AlertTriangle size={9}/> {p.inst.days_overdue}d</span>
+                                  : <span className="badge badge-neutral"><Clock size={9}/> Pendiente</span>
+                              }
+                            </div>
+                          ))
+                        )
+                    )}
+
+                    {selectedDay && (!paysByDate[selectedDay] || paysByDate[selectedDay].length === 0) && (
+                      <div style={{ padding:'40px 20px', textAlign:'center', color:'var(--t3)', fontSize:'12px' }}>
+                        Sin pagos programados para el {fmtDate(selectedDay)}.
+                      </div>
+                    )}
+                    {!selectedDay && Object.entries(paysByDate).filter(([d]) => {
                       const [y,m] = d.split('-'); return +y===calYear && +m-1===calMonth;
                     }).length === 0 && (
                       <div style={{ padding:'40px 20px', textAlign:'center', color:'var(--t3)', fontSize:'12px' }}>
