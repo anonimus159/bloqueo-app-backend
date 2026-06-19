@@ -32,6 +32,9 @@ class LockScreenActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Obtener el identificador único del dispositivo (Android ID)
+        deviceSerialNumber = android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "UNKNOWN_DEVICE"
 
         // Registrar receiver para desbloqueo instantáneo por Push
         val filter = IntentFilter("com.codecraft.control.UNLOCK_ACTION")
@@ -184,7 +187,7 @@ class LockScreenActivity : Activity() {
 
     private var polling = false
     private val serverUrl = "https://bloqueo-api.onrender.com/api/v1/devices"
-    private val deviceSerialNumber = "REF-SAMSUNG-S24-001"
+    private lateinit var deviceSerialNumber: String
 
     private fun startPolling() {
         if (polling) return

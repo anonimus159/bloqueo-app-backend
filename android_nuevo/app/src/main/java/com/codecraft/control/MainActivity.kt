@@ -29,11 +29,14 @@ class MainActivity : Activity() {
     private lateinit var dpm: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
     private val serverUrl = "https://bloqueo-api.onrender.com/api/v1/devices/check-in"
-    private val deviceSerialNumber = "REF-SAMSUNG-S24-001" // Obtenido por hardware
+    private lateinit var deviceSerialNumber: String
     private val deviceToken = "TOKEN_DE_HARDWARE_GENERADO" // Almacenado en SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Obtener el identificador único del dispositivo (Android ID)
+        deviceSerialNumber = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "UNKNOWN_DEVICE"
         
 
 
@@ -59,10 +62,23 @@ class MainActivity : Activity() {
         val statusView = TextView(this).apply {
             text = "Verificando políticas del sistema..."
             textSize = 16f
-            setPadding(0, 20, 0, 40)
+            setPadding(0, 20, 0, 20)
             gravity = Gravity.CENTER
         }
         layout.addView(statusView)
+
+        // Obtener datos reales del hardware
+        val brand = android.os.Build.BRAND.uppercase()
+        val model = android.os.Build.MODEL
+
+        val deviceDetailsView = TextView(this).apply {
+            text = "REGISTRAR EN WEB CON:\n• Serie: $deviceSerialNumber\n• Marca: $brand\n• Modelo: $model"
+            textSize = 14f
+            setTextColor(android.graphics.Color.parseColor("#4B5563")) // Gris oscuro
+            gravity = Gravity.CENTER
+            setPadding(0, 10, 0, 30)
+        }
+        layout.addView(deviceDetailsView)
 
         // Botones ocultos para producción (sincronización ahora es automática)
         val btnSync = Button(this).apply {
