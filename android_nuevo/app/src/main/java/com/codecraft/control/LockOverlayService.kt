@@ -77,6 +77,51 @@ class LockOverlayService : Service() {
         }
         overlayView?.addView(btnEmergency)
 
+        // Spacer between buttons
+        val spacer = TextView(this).apply {
+            setPadding(0, 10, 0, 10)
+        }
+        overlayView?.addView(spacer)
+
+        // Botón de Cómo Pagar (Azul moderno con texto blanco)
+        val btnHowToPay = Button(this).apply {
+            text = "CÓMO PAGAR"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#2563EB")) // Azul moderno
+            setTextColor(Color.WHITE)
+            setPadding(40, 30, 40, 30)
+            setOnClickListener {
+                try {
+                    val builder = android.app.AlertDialog.Builder(this@LockOverlayService)
+                    builder.setTitle("Instrucciones de Pago")
+                    builder.setMessage("Para reactivar su servicio, realice su pago en:\n\n" +
+                            "• Transferencia Bancaria:\n" +
+                            "  Banco: Banco de Demostración\n" +
+                            "  Cuenta CLABE: 1234 5678 9012 3456 78\n" +
+                            "  Titular: CodeCraft S.A.\n\n" +
+                            "• Tiendas de Conveniencia (Corresponsales):\n" +
+                            "  - OXXO / Walmart (Ref: 987654321)\n" +
+                            "  - Puntos de recarga autorizados\n\n" +
+                            "Su dispositivo se reactivará automáticamente después de procesar el pago.")
+                    builder.setPositiveButton("Entendido", null)
+                    val dialog = builder.create()
+                    
+                    // Configurar tipo de ventana especial para Services
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        dialog.window?.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
+                    }
+                    
+                    dialog.show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        overlayView?.addView(btnHowToPay)
+
         // Configure WindowManager LayoutParams
         val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY

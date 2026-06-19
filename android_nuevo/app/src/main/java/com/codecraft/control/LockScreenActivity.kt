@@ -126,6 +126,41 @@ class LockScreenActivity : Activity() {
         }
         layout.addView(btnEmergency)
 
+        // Spacer
+        val spacer = TextView(this).apply {
+            setPadding(0, 10, 0, 10)
+        }
+        layout.addView(spacer)
+
+        // Botón de Cómo Pagar
+        val btnHowToPay = Button(this).apply {
+            text = "CÓMO PAGAR"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#2563EB")) // Azul moderno
+            setTextColor(Color.WHITE)
+            setPadding(40, 30, 40, 30)
+            setOnClickListener {
+                try {
+                    val builder = android.app.AlertDialog.Builder(this@LockScreenActivity)
+                    builder.setTitle("Instrucciones de Pago")
+                    builder.setMessage("Para reactivar su servicio, realice su pago en:\n\n" +
+                            "• Transferencia Bancaria:\n" +
+                            "  Banco: Banco de Demostración\n" +
+                            "  Cuenta CLABE: 1234 5678 9012 3456 78\n" +
+                            "  Titular: CodeCraft S.A.\n\n" +
+                            "• Tiendas de Conveniencia (Corresponsales):\n" +
+                            "  - OXXO / Walmart (Ref: 987654321)\n" +
+                            "  - Puntos de recarga autorizados\n\n" +
+                            "Su dispositivo se reactivará automáticamente después de procesar el pago.")
+                    builder.setPositiveButton("Entendido", null)
+                    builder.show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        layout.addView(btnHowToPay)
+
         setContentView(layout)
     }
 
