@@ -270,6 +270,44 @@ export default function App() {
     void ts;
   };
 
+  const syncDeviceWithBackend = async (sale: CreditSale) => {
+    if (!authToken) return;
+    try {
+      const unpaid = sale.installments.filter(i => !i.paid);
+      const nextDeadline = unpaid.length > 0 
+        ? unpaid.reduce((earliest, inst) => inst.due_date < earliest ? inst.due_date : earliest, unpaid[0].due_date)
+        : null;
+
+      const res = await fetch(`${API_URL}/api/v1/devices/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          serial_number: sale.serial_number,
+          imei: sale.imei,
+          brand: sale.device_brand,
+          model: sale.device_model,
+          customer_name: sale.customer_name,
+          customer_phone: sale.customer_phone,
+          next_payment_deadline: nextDeadline
+        })
+      });
+
+      if (res.ok) {
+        addLog(`✓ Equipo ${sale.serial_number} sincronizado con el servidor.`);
+        fetchDevices();
+      } else {
+        const errData = await res.json();
+        addLog(`✗ Error al sincronizar equipo en el sistema: ${errData.error || res.statusText}`);
+      }
+    } catch (err) {
+      console.error(err);
+      addLog(`✗ Error de red al sincronizar el equipo con el sistema.`);
+    }
+  };
+
   const handleCommand = async () => {
     if (!selectedDevice) return;
     addLog(`Enviando ${cmdType.toUpperCase()} → ${selectedDevice.serial_number}`);
@@ -764,15 +802,17 @@ export default function App() {
                                     title={`Cuota ${inst.number} — ${fmtDate(inst.due_date)} — ${fmtCOP(inst.amount)}${inst.paid ? ' ✓' : inst.overdue ? ` (${inst.days_overdue}d)` : ''}`}
                                     onClick={() => {
                                       if (inst.paid) return;
-                                      setSales(prev => prev.map(s => {
-                                        if (s.id !== sale.id) return s;
-                                        return { ...s, installments: s.installments.map(i =>
+                                      const updatedSale = {
+                                        ...sale,
+                                        installments: sale.installments.map(i =>
                                           i.number === inst.number
-                                            ? {...i, paid:true, paid_at: new Date().toISOString(), overdue:false, days_overdue:0}
+                                            ? { ...i, paid: true, paid_at: new Date().toISOString(), overdue: false, days_overdue: 0 }
                                             : i
-                                        )};
-                                      }));
+                                        )
+                                      };
+                                      setSales(prev => prev.map(s => s.id === sale.id ? updatedSale : s));
                                       addLog(`✓ Pago registrado: Cuota ${inst.number} — ${sale.customer_name}`);
+                                      syncDeviceWithBackend(updatedSale);
                                     }}
                                   />
                                 );
@@ -1058,6 +1098,7 @@ export default function App() {
                 return updated;
               });
               addLog(`✓ Venta editada: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+              syncDeviceWithBackend(sale);
             } else {
               // Registrar nueva venta
               setSales(prev => {
@@ -1066,36 +1107,7 @@ export default function App() {
                 return updated;
               });
               addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
-
-              // Vincular con el sistema backend
-              try {
-                const res = await fetch(`${API_URL}/api/v1/devices/register`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                  },
-                  body: JSON.stringify({
-                    serial_number: sale.serial_number,
-                    imei: sale.imei,
-                    brand: sale.device_brand,
-                    model: sale.device_model,
-                    customer_name: sale.customer_name,
-                    customer_phone: sale.customer_phone
-                  })
-                });
-
-                if (res.ok) {
-                  addLog(`✓ Equipo vinculado y guardado en la base de datos.`);
-                  fetchDevices();
-                } else {
-                  const errData = await res.json();
-                  addLog(`✗ Error al vincular equipo en el sistema: ${errData.error || res.statusText}`);
-                }
-              } catch (err) {
-                console.error(err);
-                addLog(`✗ Error de red al vincular el equipo con el sistema.`);
-              }
+              syncDeviceWithBackend(sale);
             }
             setShowModal(false);
             setSaleToEdit(null);

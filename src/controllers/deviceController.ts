@@ -9,7 +9,7 @@ const DEVICE_TOKEN_SECRET = process.env.DEVICE_TOKEN_SECRET || 'device_secret';
 
 // 1. Registro de Dispositivo (Administrador)
 export const registerDevice = async (req: Request, res: Response): Promise<any> => {
-  const { serial_number, imei, brand, model, customer_name, customer_phone } = req.body;
+  const { serial_number, imei, brand, model, customer_name, customer_phone, next_payment_deadline } = req.body;
 
   if (!serial_number || !brand || !model) {
     return res.status(400).json({ error: 'Faltan campos obligatorios: serial_number, brand, model' });
@@ -17,9 +17,22 @@ export const registerDevice = async (req: Request, res: Response): Promise<any> 
 
   try {
     // Verificar duplicado
-    const existing = await db.query('SELECT id FROM devices WHERE serial_number = $1', [serial_number]);
+    const existing = await db.query('SELECT id, device_token FROM devices WHERE serial_number = $1', [serial_number]);
     if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'El dispositivo con este número de serie ya está registrado.' });
+      // Si ya existe, actualizamos los detalles del dispositivo (UPSERT lógico)
+      const deviceId = existing.rows[0].id;
+      const result = await db.query(
+        `UPDATE devices 
+         SET imei = $1, brand = $2, model = $3, customer_name = $4, customer_phone = $5, next_payment_deadline = $6, last_sync_at = CURRENT_TIMESTAMP
+         WHERE id = $7
+         RETURNING id, serial_number, brand, model, status, device_token, created_at, next_payment_deadline`,
+        [imei, brand, model, customer_name, customer_phone, next_payment_deadline || null, deviceId]
+      );
+
+      return res.status(200).json({
+        message: 'Dispositivo actualizado exitosamente.',
+        device: result.rows[0],
+      });
     }
 
     // Generar un token único y seguro para el dispositivo
@@ -27,10 +40,10 @@ export const registerDevice = async (req: Request, res: Response): Promise<any> 
     const deviceToken = jwt.sign({ serial_number, rand: rawToken }, DEVICE_TOKEN_SECRET);
 
     const result = await db.query(
-      `INSERT INTO devices (serial_number, imei, brand, model, customer_name, customer_phone, device_token, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-       RETURNING id, serial_number, brand, model, status, device_token, created_at`,
-      [serial_number, imei, brand, model, customer_name, customer_phone, deviceToken]
+      `INSERT INTO devices (serial_number, imei, brand, model, customer_name, customer_phone, device_token, status, next_payment_deadline)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8)
+       RETURNING id, serial_number, brand, model, status, device_token, created_at, next_payment_deadline`,
+      [serial_number, imei, brand, model, customer_name, customer_phone, deviceToken, next_payment_deadline || null]
     );
 
     return res.status(201).json({
@@ -133,7 +146,7 @@ export const deviceCheckIn = async (req: Request, res: Response): Promise<any> =
     
     // Buscar el dispositivo en la base de datos
     const deviceResult = await db.query(
-      'SELECT id, status FROM devices WHERE serial_number = $1',
+      'SELECT id, status, next_payment_deadline FROM devices WHERE serial_number = $1',
       [serial_number]
     );
 
@@ -159,6 +172,7 @@ export const deviceCheckIn = async (req: Request, res: Response): Promise<any> =
 
     return res.status(200).json({
       status: device.status,
+      next_payment_deadline: device.next_payment_deadline,
       commands: commandsResult.rows
     });
   } catch (error) {

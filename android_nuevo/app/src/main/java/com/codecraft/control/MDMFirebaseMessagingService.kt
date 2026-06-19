@@ -27,6 +27,10 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
             Log.d("WPC-FCM", "Acción solicitada: $action")
 
             if (action == "lock") {
+                // Guardar estado de bloqueo persistente
+                val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+                prefs.edit().putBoolean("is_locked", true).apply()
+
                 // 1. Iniciar el servicio de overlay para asegurar el bloqueo en segundo plano
                 try {
                     val overlayIntent = Intent(this, LockOverlayService::class.java)
@@ -44,6 +48,10 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                     Log.e("WPC-FCM", "Error al iniciar LockScreenActivity: ${e.message}")
                 }
             } else if (action == "unlock") {
+                // Guardar estado de desbloqueo persistente
+                val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+                prefs.edit().putBoolean("is_locked", false).apply()
+
                 // Detener el overlay
                 try {
                     val overlayIntent = Intent(this, LockOverlayService::class.java)

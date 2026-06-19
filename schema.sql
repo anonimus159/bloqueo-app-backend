@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS devices (
     customer_phone VARCHAR(50),
     device_token TEXT NOT NULL, -- Token JWT de autenticación de hardware
     last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    fcm_token VARCHAR(255),
+    next_payment_deadline TIMESTAMP WITH TIME ZONE
 );
 
 -- 2. Crear tabla de historial y encolamiento de comandos

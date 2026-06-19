@@ -157,6 +157,9 @@ class MainActivity : Activity() {
                 e.printStackTrace()
             }
         }
+
+        // Realizar comprobación offline de fecha límite de pago y manipulación horaria
+        OfflineLockManager.checkAndEnforceOfflineLock(this)
     }
 
     /**
@@ -181,6 +184,12 @@ class MainActivity : Activity() {
 
                 // 4. Autorizar el Kiosk Mode (LockTask packages)
                 dpm.setLockTaskPackages(adminComponent, arrayOf(packageName, "com.android.dialer", "com.google.android.dialer"))
+
+                // 5. Forzar fecha y hora automáticas (de red)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    dpm.setAutoTimeRequired(adminComponent, true)
+                    Log.i("WPC", "Fecha y hora automáticas (red) forzadas exitosamente.")
+                }
 
                 statusView.text = "Estado: APROVISIONADO (Dispositivo Protegido)"
                 statusView.setTextColor(android.graphics.Color.GREEN)
@@ -235,7 +244,11 @@ class MainActivity : Activity() {
                     val responseText = connection.inputStream.bufferedReader().use { it.readText() }
                     val responseJson = JSONObject(responseText)
                     val status = responseJson.optString("status", "active")
+                    val nextDeadline = responseJson.optString("next_payment_deadline", "")
                     val commands = responseJson.optJSONArray("commands")
+
+                    // Programar o cancelar la alarma local de bloqueo fuera de línea
+                    OfflineLockManager.scheduleOfflineLockAlarm(this@MainActivity, nextDeadline)
 
                     runOnUiThread {
                         val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
@@ -257,15 +270,21 @@ class MainActivity : Activity() {
                             statusView.text = "Estado: SUSPENDIDO / BLOQUEADO"
                             statusView.setTextColor(android.graphics.Color.RED)
                         } else {
-                            prefs.edit().putBoolean("is_locked", false).apply()
+                            // Ejecutar comprobación local offline por si hay desajuste
+                            OfflineLockManager.checkAndEnforceOfflineLock(this@MainActivity)
 
-                            // Si estaba en modo Kiosk, salir
-                            try {
-                                stopLockTask()
-                                stopService(android.content.Intent(this@MainActivity, LockOverlayService::class.java))
-                            } catch (e: Exception) {}
-                            statusView.text = "Estado: ACTIVO / AL CORRIENTE"
-                            statusView.setTextColor(android.graphics.Color.GREEN)
+                            if (!prefs.getBoolean("is_locked", false)) {
+                                // Si no está bloqueado localmente por expiración offline o alteración
+                                try {
+                                    stopLockTask()
+                                    stopService(android.content.Intent(this@MainActivity, LockOverlayService::class.java))
+                                } catch (e: Exception) {}
+                                statusView.text = "Estado: ACTIVO / AL CORRIENTE"
+                                statusView.setTextColor(android.graphics.Color.GREEN)
+                            } else {
+                                statusView.text = "Estado: SUSPENDIDO / BLOQUEADO"
+                                statusView.setTextColor(android.graphics.Color.RED)
+                            }
                         }
                     }
                 } else {
