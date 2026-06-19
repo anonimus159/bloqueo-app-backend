@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <!-- Payload de Restricciones del Sistema (Access Control) -->
+        <dict>
+            <key>PayloadDescription</key>
+            <string>Configura restricciones de seguridad empresarial para dispositivos financiados</string>
+            <key>PayloadDisplayName</key>
+            <string>Restricciones de Control CodeCraft</string>
+            <key>PayloadIdentifier</key>
+            <string>com.codecraft.control.restrictions</string>
+            <key>PayloadType</key>
+            <string>com.apple.applicationaccess</string>
+            <key>PayloadUUID</key>
+            <string>e9d3d3b0-fb54-47f9-86ab-d125dbb2c9ad</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <!-- RESTRICCIONES CLAVE PARA CRÉDITO -->
+            <!-- 1. Impedir la desinstalación de aplicaciones del dispositivo -->
+            <key>allowAppRemoving</key>
+            <false/>
+            
+            <!-- 2. Impedir que el usuario restablezca el dispositivo (Factory Reset) -->
+            <key>allowEraseContentAndSettings</key>
+            <false/>
+            
+            <!-- 3. Impedir la modificación de cuentas (evita remover iCloud corporativo) -->
+            <key>allowAccountModification</key>
+            <false/>
+            
+            <!-- 4. Forzar el estado de localización (Find My) siempre activo -->
+            <key>allowFindMyFriendsModifications</key>
+            <false/>
+            
+            <!-- 5. Impedir la conexión a ordenadores externos por USB (evita flasheos por cable) -->
+            <key>allowPairing</key>
+            <false/>
+            
+            <!-- 6. Deshabilitar el ingreso al modo seguro o modo avión de forma extendida -->
+            <key>allowAirplaneMode</key>
+            <true/>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Perfil MDM oficial de restricción y supervisión para la venta de terminales a crédito.</string>
+    <key>PayloadDisplayName</key>
+    <string>CodeCraft Supervisor Profile</string>
+    <key>PayloadIdentifier</key>
+    <string>com.codecraft.control.profile</string>
+    <key>PayloadOrganization</key>
+    <string>CodeCraft Programming Forge</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/> <!-- IMPIDE QUE EL USUARIO PUEDA REMOVER EL PERFIL DESDE CONFIGURACIÓN -->
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>3b827e7d-ccae-488f-9a10-2f78a2e5d95d</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>
