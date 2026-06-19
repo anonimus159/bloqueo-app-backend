@@ -28,22 +28,14 @@ class MainActivity : Activity() {
 
     private lateinit var dpm: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
-    private val serverUrl = "http://10.0.2.2:3000/api/v1/devices/check-in"
+    private val serverUrl = "https://bloqueo-api.onrender.com/api/v1/devices/check-in"
     private val deviceSerialNumber = "REF-SAMSUNG-S24-001" // Obtenido por hardware
     private val deviceToken = "TOKEN_DE_HARDWARE_GENERADO" // Almacenado en SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Obtener el FCM Token proactivamente
-        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                Log.d("WPC-FCM", "Token FCM actual: $token")
-                val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
-                prefs.edit().putString("fcm_token", token).apply()
-            }
-        }
+
 
         // Inicializar DPM (Device Policy Manager)
         dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
@@ -68,11 +60,14 @@ class MainActivity : Activity() {
             text = "Verificando políticas del sistema..."
             textSize = 16f
             setPadding(0, 20, 0, 40)
+            gravity = Gravity.CENTER
         }
         layout.addView(statusView)
 
+        // Botones ocultos para producción (sincronización ahora es automática)
         val btnSync = Button(this).apply {
             text = "Sincronizar con Servidor"
+            visibility = android.view.View.GONE
             setOnClickListener {
                 statusView.text = "Sincronizando estado..."
                 syncDeviceStatus(statusView)
@@ -82,6 +77,7 @@ class MainActivity : Activity() {
 
         val btnDemoLock = Button(this).apply {
             text = "Probar Bloqueo (Modo Demo)"
+            visibility = android.view.View.GONE
             setOnClickListener {
                 if (!Settings.canDrawOverlays(this@MainActivity)) {
                     val intent = Intent(
@@ -100,8 +96,34 @@ class MainActivity : Activity() {
 
         setContentView(layout)
 
+        // Obtener el FCM Token proactivamente
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.d("WPC-FCM", "Token FCM actual: $token")
+                val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+                prefs.edit().putString("fcm_token", token).apply()
+                
+                // SINCRONIZACIÓN AUTOMÁTICA
+                runOnUiThread {
+                    statusView.text = "Sincronizando estado automáticamente..."
+                    syncDeviceStatus(statusView)
+                }
+            }
+        }
+
         // Verificar e imponer restricciones de administración si somos el "Device Owner"
         applyEnterprisePolicies(statusView)
+
+        // Solicitar permiso de superposición (overlay) para asegurar el bloqueo en segundo plano
+        if (!Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(intent)
+            Toast.makeText(this, "Por favor activa el permiso de superposición para que el bloqueo funcione en segundo plano.", Toast.LENGTH_LONG).show()
+        }
     }
 
     /**

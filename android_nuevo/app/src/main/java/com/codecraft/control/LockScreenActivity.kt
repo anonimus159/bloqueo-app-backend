@@ -148,7 +148,7 @@ class LockScreenActivity : Activity() {
     }
 
     private var polling = false
-    private val serverUrl = "http://10.0.2.2:3000/api/v1/devices"
+    private val serverUrl = "https://bloqueo-api.onrender.com/api/v1/devices"
     private val deviceSerialNumber = "REF-SAMSUNG-S24-001"
 
     private fun startPolling() {

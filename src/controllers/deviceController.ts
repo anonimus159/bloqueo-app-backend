@@ -65,7 +65,7 @@ export const queueCommand = async (req: Request, res: Response): Promise<any> =>
 
   try {
     // Validar que el dispositivo existe
-    const deviceRes = await db.query('SELECT id, serial_number FROM devices WHERE id = $1', [deviceId]);
+    const deviceRes = await db.query('SELECT id, serial_number, fcm_token FROM devices WHERE id = $1', [deviceId]);
     if (deviceRes.rows.length === 0) {
       return res.status(404).json({ error: 'Dispositivo no encontrado.' });
     }

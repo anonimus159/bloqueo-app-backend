@@ -27,14 +27,32 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
             Log.d("WPC-FCM", "Acción solicitada: $action")
 
             if (action == "lock") {
-                // Lanzar la pantalla de bloqueo inmediatamente
-                val intent = Intent(this, LockScreenActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                startActivity(intent)
+                // 1. Iniciar el servicio de overlay para asegurar el bloqueo en segundo plano
+                try {
+                    val overlayIntent = Intent(this, LockOverlayService::class.java)
+                    startService(overlayIntent)
+                } catch (e: Exception) {
+                    Log.e("WPC-FCM", "Error al iniciar LockOverlayService: ${e.message}")
+                }
+
+                // 2. Lanzar la actividad de bloqueo
+                try {
+                    val intent = Intent(this, LockScreenActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e("WPC-FCM", "Error al iniciar LockScreenActivity: ${e.message}")
+                }
             } else if (action == "unlock") {
-                // Para desbloquear, enviamos un broadcast o iniciamos un servicio
-                // En este caso, LockScreenActivity tiene un polling que saldrá solo,
-                // pero si queremos forzarlo, enviamos un broadcast local.
+                // Detener el overlay
+                try {
+                    val overlayIntent = Intent(this, LockOverlayService::class.java)
+                    stopService(overlayIntent)
+                } catch (e: Exception) {
+                    Log.e("WPC-FCM", "Error al detener LockOverlayService: ${e.message}")
+                }
+
+                // Detener la actividad de bloqueo
                 val intent = Intent("com.codecraft.control.UNLOCK_ACTION")
                 sendBroadcast(intent)
             }
