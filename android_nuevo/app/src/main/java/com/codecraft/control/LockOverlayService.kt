@@ -32,42 +32,50 @@ class LockOverlayService : Service() {
         overlayView = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#E53935")) // Red background
+            setBackgroundColor(Color.BLACK) // Black background
             setPadding(50, 50, 50, 50)
         }
 
         // Add a warning title
         val titleView = TextView(this).apply {
             text = "DISPOSITIVO BLOQUEADO"
-            textSize = 28f
+            textSize = 24f
             setTypeface(null, android.graphics.Typeface.BOLD)
-            setTextColor(Color.WHITE)
+            setTextColor(Color.parseColor("#EF4444")) // Red text
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 30)
+            setPadding(0, 0, 0, 20)
         }
         overlayView?.addView(titleView)
 
         // Add a message
         val messageView = TextView(this).apply {
-            text = "Este dispositivo ha sido bloqueado por falta de pago. Por favor regularice su situación para restaurar el acceso."
-            textSize = 18f
+            text = "Este equipo ha sido suspendido por su proveedor. Para reactivarlo, por favor regularice su situación."
+            textSize = 16f
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 60)
         }
         overlayView?.addView(messageView)
 
-        // Add a "Test Unlock" button so the user doesn't get stuck during demo
-        val btnUnlock = Button(this).apply {
-            text = "SALIR DE LA PRUEBA (DESBLOQUEAR)"
-            setBackgroundColor(Color.WHITE)
-            setTextColor(Color.parseColor("#E53935"))
+        // Botón de Llamadas de Emergencia (Gris oscuro con texto blanco)
+        val btnEmergency = Button(this).apply {
+            text = "LLAMADAS DE EMERGENCIA"
+            textSize = 16f
+            setBackgroundColor(Color.parseColor("#374151")) // Gris oscuro
+            setTextColor(Color.WHITE)
+            setPadding(40, 30, 40, 30)
             setOnClickListener {
-                Toast.makeText(this@LockOverlayService, "Bloqueo de prueba desactivado", Toast.LENGTH_SHORT).show()
-                stopSelf() // Stop the service, which removes the view in onDestroy
+                try {
+                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
-        overlayView?.addView(btnUnlock)
+        overlayView?.addView(btnEmergency)
 
         // Configure WindowManager LayoutParams
         val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
