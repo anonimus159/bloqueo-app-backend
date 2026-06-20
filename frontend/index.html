@@ -24,12 +24,31 @@
       </div>
     </div>
     <script>
+      // Escuchar solo errores reales de ejecución de JavaScript
       window.addEventListener('error', function(e) {
+        // Los errores de carga de recursos no tienen 'message' o su target es un elemento HTML
+        if (!e.message || (e.target && e.target !== window)) {
+          return;
+        }
         var overlay = document.getElementById('error-overlay');
         var text = document.getElementById('error-text');
         if (overlay && text) {
           overlay.style.display = 'flex';
           text.innerText = e.message + (e.error && e.error.stack ? '\n\nStack:\n' + e.error.stack : '');
+        }
+      });
+
+      // Escuchar también promesas no capturadas que fallen en ejecución
+      window.addEventListener('unhandledrejection', function(e) {
+        var reason = e.reason;
+        var msg = reason instanceof Error ? reason.message : String(reason);
+        var stack = reason instanceof Error && reason.stack ? reason.stack : '';
+        
+        var overlay = document.getElementById('error-overlay');
+        var text = document.getElementById('error-text');
+        if (overlay && text) {
+          overlay.style.display = 'flex';
+          text.innerText = 'Promesa no controlada fallida: ' + msg + (stack ? '\n\nStack:\n' + stack : '');
         }
       });
     </script>
