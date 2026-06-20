@@ -24,19 +24,30 @@
       </div>
     </div>
     <script>
-      // Escuchar solo errores reales de ejecución de JavaScript
+      // Escuchar todos los errores del sistema (incluyendo recursos) para diagnóstico completo
       window.addEventListener('error', function(e) {
-        // Los errores de carga de recursos no tienen 'message' o su target es un elemento HTML
-        if (!e.message || (e.target && e.target !== window)) {
-          return;
-        }
         var overlay = document.getElementById('error-overlay');
         var text = document.getElementById('error-text');
         if (overlay && text) {
           overlay.style.display = 'flex';
-          text.innerText = e.message + (e.error && e.error.stack ? '\n\nStack:\n' + e.error.stack : '');
+          var details = [];
+          details.push("Tipo de Evento: " + e.type);
+          if (e.message) details.push("Mensaje: " + e.message);
+          if (e.filename) details.push("Archivo: " + e.filename);
+          if (e.lineno) details.push("Línea: " + e.lineno + ", Col: " + e.colno);
+          if (e.error) {
+            details.push("Nombre de Error: " + e.error.name);
+            details.push("Detalle de Error: " + e.error.message);
+            if (e.error.stack) details.push("Stack Trace:\n" + e.error.stack);
+          }
+          if (e.target && e.target !== window) {
+            details.push("Elemento Fallido: <" + e.target.tagName + ">");
+            if (e.target.src) details.push("URL Origen (src): " + e.target.src);
+            if (e.target.href) details.push("URL Destino (href): " + e.target.href);
+          }
+          text.innerText = details.join("\n");
         }
-      });
+      }, true); // Captura para errores de red en assets
 
       // Escuchar también promesas no capturadas que fallen en ejecución
       window.addEventListener('unhandledrejection', function(e) {
