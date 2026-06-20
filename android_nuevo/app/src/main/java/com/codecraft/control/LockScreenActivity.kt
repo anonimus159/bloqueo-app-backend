@@ -218,6 +218,19 @@ class LockScreenActivity : Activity() {
                         }
 
                         if (!isStillLocked) {
+                            // Guardar estado de desbloqueo persistente
+                            val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+                            prefs.edit().putBoolean("is_locked", false).apply()
+
+                            // Remover restricciones empresariales
+                            OfflineLockManager.applyEnterpriseLockPolicies(this@LockScreenActivity, false)
+
+                            // Detener el overlay
+                            try {
+                                val overlayIntent = Intent(this@LockScreenActivity, LockOverlayService::class.java)
+                                stopService(overlayIntent)
+                            } catch (e: Exception) {}
+
                             runOnUiThread {
                                 try {
                                     stopLockTask()

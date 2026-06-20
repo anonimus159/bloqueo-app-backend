@@ -95,19 +95,35 @@ function fmtCOP(n: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(n);
 }
 function fmtDate(d: string) {
-  const [y, m, dd] = d.split('-'); return `${dd}/${m}/${y}`;
+  if (!d || typeof d !== 'string') return '';
+  const parts = d.split('-');
+  if (parts.length < 3) return d;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 function getDueSeverity(sale: CreditSale): 'ok' | 'warning' | 'alert' {
-  const ov = sale.installments.filter(i => !i.paid && i.overdue);
+  if (!sale || !Array.isArray(sale.installments)) return 'ok';
+  const ov = sale.installments.filter(i => i && !i.paid && i.overdue);
   if (!ov.length) return 'ok';
-  return Math.max(...ov.map(i => i.days_overdue)) >= 2 ? 'alert' : 'warning';
+  return Math.max(...ov.map(i => i.days_overdue || 0)) >= 2 ? 'alert' : 'warning';
 }
 
 // Persistence
 function loadSales(): CreditSale[] {
-  try { return JSON.parse(localStorage.getItem('fc_sales') || '[]'); } catch { return []; }
+  try {
+    const raw = localStorage.getItem('fc_sales');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s: any) => s && typeof s === 'object' && Array.isArray(s.installments));
+  } catch {
+    return [];
+  }
 }
-function saveSales(s: CreditSale[]) { localStorage.setItem('fc_sales', JSON.stringify(s)); }
+function saveSales(s: CreditSale[]) {
+  if (Array.isArray(s)) {
+    localStorage.setItem('fc_sales', JSON.stringify(s));
+  }
+}
 function loadTheme(): Theme {
   return (localStorage.getItem('fc_theme') as Theme) || 'dark';
 }
@@ -352,14 +368,20 @@ export default function App() {
   };
 
   // Stats
-  const stats = useMemo(() => ({
-    total: sales.length,
-    active: sales.filter(s => s.status === 'active').length,
-    overdue: sales.filter(s => s.status === 'overdue').length,
-    completed: sales.filter(s => s.status === 'completed').length,
-    collected: sales.reduce((a, s) => a + s.installments.filter(i => i.paid).reduce((x, i) => x + i.amount, 0), 0),
-    alertCount: sales.filter(s => getDueSeverity(s) === 'alert').length,
-  }), [sales]);
+  const stats = useMemo(() => {
+    const safeSales = Array.isArray(sales) ? sales : [];
+    return {
+      total: safeSales.length,
+      active: safeSales.filter(s => s && s.status === 'active').length,
+      overdue: safeSales.filter(s => s && s.status === 'overdue').length,
+      completed: safeSales.filter(s => s && s.status === 'completed').length,
+      collected: safeSales.reduce((a, s) => {
+        if (!s || !Array.isArray(s.installments)) return a;
+        return a + s.installments.filter(i => i && i.paid).reduce((x, i) => x + (i.amount || 0), 0);
+      }, 0),
+      alertCount: safeSales.filter(s => s && getDueSeverity(s) === 'alert').length,
+    };
+  }, [sales]);
 
   // Calendar
   const calYear = calDate.getFullYear();
@@ -369,18 +391,31 @@ export default function App() {
 
   const paysByDate = useMemo(() => {
     const m: Record<string, { sale: CreditSale; inst: Installment }[]> = {};
-    sales.forEach(s => s.installments.forEach(i => {
-      if (!m[i.due_date]) m[i.due_date] = [];
-      m[i.due_date].push({ sale: s, inst: i });
-    }));
+    const safeSales = Array.isArray(sales) ? sales : [];
+    safeSales.forEach(s => {
+      if (s && Array.isArray(s.installments)) {
+        s.installments.forEach(i => {
+          if (i && i.due_date) {
+            if (!m[i.due_date]) m[i.due_date] = [];
+            m[i.due_date].push({ sale: s, inst: i });
+          }
+        });
+      }
+    });
     return m;
   }, [sales]);
 
-  const filteredDevices = devices.filter(d =>
-    d.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.brand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDevices = useMemo(() => {
+    const safeDevices = Array.isArray(devices) ? devices : [];
+    const term = (searchTerm || '').toLowerCase();
+    return safeDevices.filter(d => {
+      if (!d) return false;
+      const serial = (d.serial_number || '').toLowerCase();
+      const name = (d.customer_name || '').toLowerCase();
+      const brand = (d.brand || '').toLowerCase();
+      return serial.includes(term) || name.includes(term) || brand.includes(term);
+    });
+  }, [devices, searchTerm]);
 
   const navItems: { id: ActiveView; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'dashboard', label: 'Panel', icon: <Home size={17} /> },

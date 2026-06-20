@@ -31,6 +31,9 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                 val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
                 prefs.edit().putBoolean("is_locked", true).apply()
 
+                // Aplicar políticas empresariales de bloqueo (barra de estado, ajustes, etc.)
+                OfflineLockManager.applyEnterpriseLockPolicies(this, true)
+
                 // 1. Iniciar el servicio de overlay para asegurar el bloqueo en segundo plano
                 try {
                     val overlayIntent = Intent(this, LockOverlayService::class.java)
@@ -51,6 +54,9 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                 // Guardar estado de desbloqueo persistente
                 val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
                 prefs.edit().putBoolean("is_locked", false).apply()
+
+                // Remover políticas empresariales de bloqueo
+                OfflineLockManager.applyEnterpriseLockPolicies(this, false)
 
                 // Detener el overlay
                 try {

@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.os.UserManager
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -152,6 +155,12 @@ object OfflineLockManager {
 
         Log.d(TAG, "Evaluando estado offline: isLocked=$isLocked, deadlineMs=$deadlineMs, lastKnownTime=$lastKnownTime, currentTime=$currentTime")
 
+        if (isLocked) {
+            Log.w(TAG, "El dispositivo ya estaba marcado como bloqueado. Re-enforzando políticas y pantallas de bloqueo.")
+            lockDevice(context, "El dispositivo ya estaba bloqueado.")
+            return
+        }
+
         if (deadlineMs <= 0L) {
             // Si no hay fecha límite de pago guardada, el dispositivo está al día.
             // Actualizar la última hora conocida si el reloj avanza.
@@ -194,6 +203,9 @@ object OfflineLockManager {
 
         Log.w(TAG, "Enforzando bloqueo offline local: $reason")
 
+        // Aplicar restricciones empresariales (barra de estado, ajustes, etc.)
+        applyEnterpriseLockPolicies(context, true)
+
         // Iniciar LockOverlayService
         try {
             val overlayIntent = Intent(context, LockOverlayService::class.java)
@@ -210,6 +222,56 @@ object OfflineLockManager {
             context.startActivity(lockIntent)
         } catch (e: Exception) {
             Log.e(TAG, "No se pudo iniciar LockScreenActivity: ${e.message}")
+        }
+    }
+
+    /**
+     * Aplica o remueve restricciones empresariales nativas usando DevicePolicyManager
+     * (requiere que la aplicación sea Device Owner).
+     */
+    fun applyEnterpriseLockPolicies(context: Context, lock: Boolean) {
+        val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as? DevicePolicyManager ?: return
+        val adminComponent = ComponentName(context, DeviceAdminRcvr::class.java)
+
+        if (!dpm.isDeviceOwnerApp(context.packageName)) {
+            Log.w(TAG, "applyEnterpriseLockPolicies: La aplicación no es Device Owner. Se omiten políticas empresariales.")
+            return
+        }
+
+        try {
+            if (lock) {
+                // 1. Deshabilitar la barra de estado (previene deslizar notificaciones/ajustes rápidos)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    dpm.setStatusBarDisabled(adminComponent, true)
+                }
+
+                // 2. Bloquear acceso a los Ajustes del sistema
+                dpm.addUserRestriction(adminComponent, "no_config_settings")
+
+                // 3. Deshabilitar reinicio en Modo Seguro (Safe Boot)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT)
+                }
+
+                Log.i(TAG, "Políticas empresariales de bloqueo aplicadas con éxito.")
+            } else {
+                // 1. Rehabilitar la barra de estado
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    dpm.setStatusBarDisabled(adminComponent, false)
+                }
+
+                // 2. Permitir acceso a los Ajustes del sistema
+                dpm.clearUserRestriction(adminComponent, "no_config_settings")
+
+                // 3. Permitir reinicio en Modo Seguro
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    dpm.clearUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT)
+                }
+
+                Log.i(TAG, "Políticas empresariales de bloqueo removidas con éxito.")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al configurar políticas empresariales de bloqueo: ${e.message}")
         }
     }
 }

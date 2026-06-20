@@ -145,6 +145,9 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
         if (prefs.getBoolean("is_locked", false)) {
             try {
+                // Asegurar restricciones empresariales (barra de estado, ajustes, etc.)
+                OfflineLockManager.applyEnterpriseLockPolicies(this, true)
+
                 // Relanzar servicio de overlay
                 val overlayIntent = Intent(this, LockOverlayService::class.java)
                 startService(overlayIntent)
@@ -255,6 +258,9 @@ class MainActivity : Activity() {
                         if (status == "locked") {
                             prefs.edit().putBoolean("is_locked", true).apply()
 
+                            // Aplicar políticas empresariales de bloqueo
+                            OfflineLockManager.applyEnterpriseLockPolicies(this@MainActivity, true)
+
                             // Lanzar el overlay de bloqueo inmediatamente
                             try {
                                 val overlayIntent = Intent(this@MainActivity, LockOverlayService::class.java)
@@ -274,7 +280,8 @@ class MainActivity : Activity() {
                             OfflineLockManager.checkAndEnforceOfflineLock(this@MainActivity)
 
                             if (!prefs.getBoolean("is_locked", false)) {
-                                // Si no está bloqueado localmente por expiración offline o alteración
+                                // Si no está bloqueado localmente por expiración offline o alteración, liberar restricciones
+                                OfflineLockManager.applyEnterpriseLockPolicies(this@MainActivity, false)
                                 try {
                                     stopLockTask()
                                     stopService(android.content.Intent(this@MainActivity, LockOverlayService::class.java))
