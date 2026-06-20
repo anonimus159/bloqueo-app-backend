@@ -174,39 +174,6 @@ export default function App() {
     }
   };
 
-  if (!authToken) {
-    return (
-      <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="panel" style={{ width: '100%', maxWidth: '400px', padding: '30px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{ display: 'inline-flex', background: 'var(--indigo-dim)', color: 'var(--indigo)', padding: '12px', borderRadius: '50%', marginBottom: '16px' }}>
-              <Lock size={24} />
-            </div>
-            <h2 style={{ margin: 0, fontSize: '20px' }}>FinControl</h2>
-            <p style={{ color: 'var(--t3)', margin: '4px 0 0 0', fontSize: '13px' }}>Inicia sesión para continuar</p>
-          </div>
-          {loginError && (
-            <div style={{ background: 'var(--rose-dim)', color: 'var(--rose)', padding: '10px', borderRadius: 'var(--r)', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={14} /> {loginError}
-            </div>
-          )}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label className="field-label">Correo electrónico</label>
-              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="field-input" required />
-            </div>
-            <div>
-              <label className="field-label">Contraseña</label>
-              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="field-input" required />
-            </div>
-            <button type="submit" className="btn-primary" style={{ marginTop: '8px', padding: '10px' }}>
-              Entrar al Sistema
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   // Apply theme
   useEffect(() => {
@@ -430,6 +397,40 @@ export default function App() {
     calendar:  'Calendario de Pagos',
     alerts:    'Alertas de Mora',
   };
+
+  if (!authToken) {
+    return (
+      <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="panel" style={{ width: '100%', maxWidth: '400px', padding: '30px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ display: 'inline-flex', background: 'var(--indigo-dim)', color: 'var(--indigo)', padding: '12px', borderRadius: '50%', marginBottom: '16px' }}>
+              <Lock size={24} />
+            </div>
+            <h2 style={{ margin: 0, fontSize: '20px' }}>FinControl</h2>
+            <p style={{ color: 'var(--t3)', margin: '4px 0 0 0', fontSize: '13px' }}>Inicia sesión para continuar</p>
+          </div>
+          {loginError && (
+            <div style={{ background: 'var(--rose-dim)', color: 'var(--rose)', padding: '10px', borderRadius: 'var(--r)', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={14} /> {loginError}
+            </div>
+          )}
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label className="field-label">Correo electrónico</label>
+              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="field-input" required />
+            </div>
+            <div>
+              <label className="field-label">Contraseña</label>
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="field-input" required />
+            </div>
+            <button type="submit" className="btn-primary" style={{ marginTop: '8px', padding: '10px' }}>
+              Entrar al Sistema
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
