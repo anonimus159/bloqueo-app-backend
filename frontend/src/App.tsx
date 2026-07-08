@@ -33,7 +33,7 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-    ? 'https://bloqueo-api.onrender.com' 
+    ? 'https://bloqueo-app-backend.onrender.com' 
     : 'http://localhost:3000');
 
 // ══════════════════════════════════════════════════════════
