@@ -21,8 +21,25 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   }
 }
 
-const app = initializeApp({
-  credential: credentialConfig,
-});
+let messaging: any;
 
-export const messaging = getMessaging(app);
+try {
+  if (!credentialConfig) {
+    throw new Error("No credential config provided");
+  }
+  const app = initializeApp({
+    credential: credentialConfig,
+  });
+  messaging = getMessaging(app);
+} catch (error) {
+  console.error("⚠️ Firebase Admin SDK could not be initialized (missing or invalid credentials):", error);
+  // Fallback dummy object to prevent runtime errors
+  messaging = {
+    send: async (message: any) => {
+      console.log("Mock FCM send:", message);
+      return "mock-message-id";
+    }
+  };
+}
+
+export { messaging };
