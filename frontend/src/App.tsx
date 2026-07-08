@@ -28,9 +28,15 @@ import {
   BarChart2,
   Activity,
   Edit,
+  LogOut,
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+    ? (window.location.hostname.includes('vercel.app') && window.location.hostname !== 'bloqueo-app-backend.vercel.app'
+        ? 'https://bloqueo-app-backend.vercel.app' 
+        : window.location.origin)
+    : 'http://localhost:3000');
 
 // ══════════════════════════════════════════════════════════
 // Types
@@ -172,6 +178,11 @@ export default function App() {
     } catch (err) {
       setLoginError('Error de conexión con el servidor');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('fc_token');
+    setAuthToken(null);
   };
 
 
@@ -532,6 +543,14 @@ export default function App() {
                 <div className="user-name">Administrador</div>
               </div>
             </div>
+            <button 
+              className="btn-outline" 
+              onClick={handleLogout} 
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '13px', marginLeft: '12px' }}
+            >
+              <LogOut size={14} />
+              Cerrar sesión
+            </button>
           </div>
         </header>
 
