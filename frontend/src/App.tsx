@@ -33,9 +33,7 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-    ? (window.location.hostname.includes('vercel.app') && window.location.hostname !== 'bloqueo-app-backend.vercel.app'
-        ? 'https://bloqueo-app-backend.vercel.app' 
-        : window.location.origin)
+    ? 'https://bloqueo-api.onrender.com' 
     : 'http://localhost:3000');
 
 // ══════════════════════════════════════════════════════════
