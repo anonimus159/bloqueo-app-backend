@@ -37,7 +37,7 @@ class MainActivity : Activity() {
 
     private lateinit var dpm: DevicePolicyManager
     private lateinit var adminComponent: ComponentName
-    private val serverUrl = "http://127.0.0.1:3000/api/v1/devices/check-in"
+    private val serverUrl = "https://bloqueo-app-backend.onrender.com/api/v1/devices/check-in"
     private lateinit var deviceSerialNumber: String
     private val deviceToken = "TOKEN_DE_HARDWARE_GENERADO" // Almacenado en SharedPreferences
 

@@ -464,7 +464,7 @@ class LockScreenActivity : Activity() {
     }
 
     private var polling = false
-    private val serverUrl = "http://127.0.0.1:3000/api/v1/devices"
+    private val serverUrl = "https://bloqueo-app-backend.onrender.com/api/v1/devices"
     private lateinit var deviceSerialNumber: String
 
     private fun startPolling() {
