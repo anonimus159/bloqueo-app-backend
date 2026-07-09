@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import deviceRoutes from './routes/deviceRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import mdmRoutes from './routes/mdmRoutes';
+import { rawBodyParser } from './middlewares/plistMiddleware';
 
 dotenv.config();
 
@@ -12,12 +14,14 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());
+app.use(rawBodyParser); // Middleware para parsear XML Plist de Apple MDM
 app.use(express.json());
 
 // Registrar Rutas de la API
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/devices', deviceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/mdm', mdmRoutes);
 
 // Endpoint de verificación de estado (Health Check)
 app.get('/health', (_req, res) => {

@@ -13,11 +13,14 @@ CREATE TABLE IF NOT EXISTS devices (
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'locked', 'suspended', 'wiped')),
     customer_name VARCHAR(150),
     customer_phone VARCHAR(50),
-    device_token TEXT NOT NULL, -- Token JWT de autenticación de hardware
+    device_token TEXT, -- Token JWT de autenticación de hardware (opcional para iOS)
     last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     fcm_token VARCHAR(255),
-    next_payment_deadline TIMESTAMP WITH TIME ZONE
+    next_payment_deadline TIMESTAMP WITH TIME ZONE,
+    udid VARCHAR(100) UNIQUE,
+    push_magic VARCHAR(100),
+    device_type VARCHAR(20) DEFAULT 'android' CHECK (device_type IN ('android', 'ios'))
 );
 
 -- 2. Crear tabla de historial y encolamiento de comandos

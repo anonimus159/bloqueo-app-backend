@@ -29,7 +29,9 @@ import {
   Activity,
   Edit,
   LogOut,
+  Laptop,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const API_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
@@ -49,6 +51,9 @@ interface Device {
   brand: string; model: string;
   status: 'active' | 'locked' | 'suspended';
   customer_name: string; customer_phone: string; last_sync_at: string;
+  device_type?: 'android' | 'ios';
+  udid?: string;
+  push_magic?: string;
 }
 
 interface Installment {
@@ -153,6 +158,7 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>(['Sistema listo y escuchando.', 'Servidor iniciado correctamente.']);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showMdmModal, setShowMdmModal] = useState(false);
   const [saleToEdit, setSaleToEdit] = useState<CreditSale | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calDate, setCalDate] = useState(new Date());
@@ -612,7 +618,15 @@ export default function App() {
                     <label className="field-label">Dispositivo seleccionado</label>
                     <div className="device-display">
                       {selectedDevice
-                        ? <><span>{selectedDevice.brand} {selectedDevice.model}</span><span className="code-chip">{selectedDevice.serial_number}</span></>
+                        ? <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '9px', background: selectedDevice.device_type === 'ios' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: selectedDevice.device_type === 'ios' ? '#818CF8' : '#34D399', padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                                {selectedDevice.device_type || 'android'}
+                              </span>
+                              <span>{selectedDevice.brand} {selectedDevice.model}</span>
+                            </div>
+                            <span className="code-chip">{selectedDevice.serial_number}</span>
+                          </>
                         : <span className="placeholder-text">Ninguno — seleccione de la tabla inferior</span>
                       }
                     </div>
@@ -665,7 +679,15 @@ export default function App() {
                 <div className="panel-header">
                   <BarChart2 size={16} className="text-indigo" />
                   <span>Dispositivos — Backend</span>
-                  <div style={{ marginLeft:'auto' }}>
+                  <div style={{ marginLeft:'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => setShowMdmModal(true)}
+                      style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Plus size={12} />
+                      Inscribir iPhone
+                    </button>
                     <div className="search-wrap">
                       <Search size={13} />
                       <input
@@ -701,8 +723,15 @@ export default function App() {
                           onClick={() => setSelectedDevice(dev)}
                         >
                           <td>
-                            <div className="cell-title">{dev.brand}</div>
-                            <div className="cell-sub">{dev.model}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '9px', background: dev.device_type === 'ios' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: dev.device_type === 'ios' ? '#818CF8' : '#34D399', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                                {dev.device_type || 'android'}
+                              </span>
+                              <div>
+                                <div className="cell-title">{dev.brand}</div>
+                                <div className="cell-sub">{dev.model}</div>
+                              </div>
+                            </div>
                           </td>
                           <td><span className="code-chip">{dev.serial_number}</span></td>
                           <td>
@@ -1167,6 +1196,12 @@ export default function App() {
           }}
         />
       )}
+
+      <MdmEnrollModal
+        isOpen={showMdmModal}
+        onClose={() => setShowMdmModal(false)}
+        apiUrl={API_URL}
+      />
     </div>
   );
 }
@@ -1346,3 +1381,62 @@ function RegisterModal({ onClose, onSave, saleToEdit }: { onClose: () => void; o
     </div>
   );
 }
+
+// ══════════════════════════════════════════════════════════
+// iOS MDM Enrollment Modal
+// ══════════════════════════════════════════════════════════
+interface MdmEnrollModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apiUrl: string;
+}
+
+function MdmEnrollModal({ isOpen, onClose, apiUrl }: MdmEnrollModalProps) {
+  if (!isOpen) return null;
+
+  const enrollUrl = `${apiUrl}/api/v1/mdm/enroll`;
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content" style={{ maxWidth: '450px', padding: '24px' }}>
+        <div className="modal-header" style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: 'var(--indigo-dim)', color: 'var(--indigo)', padding: '6px', borderRadius: '6px' }}>
+              <Laptop size={16} />
+            </div>
+            <h2 className="modal-title" style={{ fontSize: '16px', margin: 0 }}>Inscripción de Dispositivo iOS</h2>
+          </div>
+          <button className="icon-btn" onClick={onClose}><X size={16}/></button>
+        </div>
+
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', textAlign: 'center', padding: '10px 0' }}>
+          <p style={{ color: 'var(--t3)', fontSize: '13px', margin: 0, lineHeight: '1.4' }}>
+            Escanee este código QR con la cámara del iPhone o iPad para descargar e instalar el perfil de control y supervisión de MDM.
+          </p>
+
+          <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <QRCodeSVG value={enrollUrl} size={180} />
+          </div>
+
+          <div className="code-chip" style={{ wordBreak: 'break-all', fontSize: '11px', padding: '8px 12px' }}>
+            {enrollUrl}
+          </div>
+
+          <div style={{ width: '100%', textAlign: 'left', background: 'var(--bg-card)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px' }}>
+            <strong style={{ display: 'block', marginBottom: '6px', color: 'var(--t1)' }}>Pasos en el iPhone:</strong>
+            <ol style={{ margin: 0, paddingLeft: '20px', color: 'var(--t2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>Escanee el código QR y descargue el perfil en Safari.</li>
+              <li>Vaya a <strong>Ajustes &gt; Perfil descargado</strong>.</li>
+              <li>Pulse <strong>Instalar</strong> y autorice la administración del sistema.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+          <button type="button" className="btn-primary w-full" onClick={onClose}>Entendido</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

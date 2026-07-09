@@ -59,7 +59,7 @@ export const registerDevice = async (req: Request, res: Response): Promise<any> 
 // 2. Listar Dispositivos (Administrador)
 export const getDevices = async (_req: Request, res: Response): Promise<any> => {
   try {
-    const result = await db.query('SELECT id, serial_number, imei, brand, model, status, customer_name, customer_phone, last_sync_at, created_at FROM devices ORDER BY created_at DESC');
+    const result = await db.query('SELECT id, serial_number, imei, brand, model, status, customer_name, customer_phone, last_sync_at, created_at, device_type, udid, push_magic FROM devices ORDER BY created_at DESC');
     return res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error al obtener dispositivos:', error);
@@ -143,6 +143,7 @@ export const queueCommand = async (req: Request, res: Response): Promise<any> =>
 export const deviceCheckIn = async (req: Request, res: Response): Promise<any> => {
   try {
     const { serial_number, fcm_token } = req.body;
+    console.log(`[CHECK-IN] Recibido check-in para serial_number: "${serial_number}"`);
     
     // Buscar el dispositivo en la base de datos
     const deviceResult = await db.query(
