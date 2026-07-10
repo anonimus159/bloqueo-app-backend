@@ -270,17 +270,26 @@ class MainActivity : Activity() {
         setContentView(scrollContainer)
 
         // Obtener el FCM Token proactivamente
-        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result
-                Log.d("WPC-FCM", "Token FCM actual: $token")
-                val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
-                prefs.edit().putString("fcm_token", token).apply()
-            } else {
-                Log.w("WPC-FCM", "No se pudo obtener el FCM token: ${task.exception?.message}")
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    Log.d("WPC-FCM", "Token FCM actual: $token")
+                    val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
+                    prefs.edit().putString("fcm_token", token).apply()
+                } else {
+                    Log.w("WPC-FCM", "No se pudo obtener el FCM token: ${task.exception?.message}")
+                }
+                
+                // SINCRONIZACIÓN AUTOMÁTICA
+                runOnUiThread {
+                    statusView.text = "Sincronizando estado automáticamente..."
+                    syncDeviceStatus(statusView)
+                }
             }
-            
-            // SINCRONIZACIÓN AUTOMÁTICA
+        } catch (e: Exception) {
+            Log.e("WPC-FCM", "Fallo al inicializar FCM Messaging: ${e.message}")
+            // Intentar check-in de todas formas
             runOnUiThread {
                 statusView.text = "Sincronizando estado automáticamente..."
                 syncDeviceStatus(statusView)
