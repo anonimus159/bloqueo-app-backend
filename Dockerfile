@@ -24,6 +24,9 @@ RUN npm ci --only=production
 # Copiar los archivos compilados del builder
 COPY --from=builder /app/dist ./dist
 
+# Copiar carpeta public con el APK para descarga directa de Android
+COPY public/ ./public/
+
 # Variables de entorno por defecto
 ENV NODE_ENV=production
 ENV PORT=3000
