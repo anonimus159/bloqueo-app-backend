@@ -32,6 +32,7 @@ import {
   Laptop,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = (typeof window !== 'undefined' && 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
@@ -561,11 +562,18 @@ export default function App() {
         </header>
 
         {/* ─── View Content ─────────────────────────────────── */}
-        <div className="view-content">
-
-          {/* ══ DASHBOARD ══════════════════════════════════════ */}
-          {view === 'dashboard' && (
-            <div className="view-fade">
+        <div className="view-content" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <AnimatePresence mode="wait">
+            {/* ══ DASHBOARD ══════════════════════════════════════ */}
+            {view === 'dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ type: 'spring', duration: 0.35 }}
+                className="view-fade"
+              >
               {/* Stats — Bento premium */}
               <div className="stats-grid">
                 <div className="stat-card accent-indigo">
@@ -773,12 +781,19 @@ export default function App() {
                   </table>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* ══ CREDITS ════════════════════════════════════════ */}
           {view === 'credits' && (
-            <div className="view-fade">
+            <motion.div
+              key="credits"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', duration: 0.35 }}
+              className="view-fade"
+            >
               {sales.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon-wrap"><CreditCard size={28} /></div>
@@ -927,12 +942,19 @@ export default function App() {
                   })}
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
 
           {/* ══ CALENDAR ═══════════════════════════════════════ */}
           {view === 'calendar' && (
-            <div className="view-fade">
+            <motion.div
+              key="calendar"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', duration: 0.35 }}
+              className="view-fade"
+            >
               <div className="grid-2col">
                 <div className="panel">
                   <div className="calendar-nav">
@@ -1090,12 +1112,19 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* ══ ALERTS ═════════════════════════════════════════ */}
           {view === 'alerts' && (
-            <div className="view-fade">
+            <motion.div
+              key="alerts"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ type: 'spring', duration: 0.35 }}
+              className="view-fade"
+            >
               <div className="alerts-list">
                 {sales.filter(s => getDueSeverity(s) !== 'ok').length === 0 ? (
                   <div className="empty-state">
@@ -1171,9 +1200,9 @@ export default function App() {
                     })
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
-
+          </AnimatePresence>
         </div>
       </div>
 
