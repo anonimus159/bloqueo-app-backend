@@ -159,6 +159,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showMdmModal, setShowMdmModal] = useState(false);
+  const [showAndroidMdmModal, setShowAndroidMdmModal] = useState(false);
   const [saleToEdit, setSaleToEdit] = useState<CreditSale | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calDate, setCalDate] = useState(new Date());
@@ -682,6 +683,14 @@ export default function App() {
                   <div style={{ marginLeft:'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <button 
                       className="btn-outline" 
+                      onClick={() => setShowAndroidMdmModal(true)}
+                      style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Plus size={12} />
+                      Inscribir Android
+                    </button>
+                    <button 
+                      className="btn-outline" 
                       onClick={() => setShowMdmModal(true)}
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
@@ -1202,6 +1211,12 @@ export default function App() {
         onClose={() => setShowMdmModal(false)}
         apiUrl={API_URL}
       />
+
+      <AndroidMdmEnrollModal
+        isOpen={showAndroidMdmModal}
+        onClose={() => setShowAndroidMdmModal(false)}
+        apiUrl={API_URL}
+      />
     </div>
   );
 }
@@ -1428,6 +1443,72 @@ function MdmEnrollModal({ isOpen, onClose, apiUrl }: MdmEnrollModalProps) {
               <li>Escanee el código QR y descargue el perfil en Safari.</li>
               <li>Vaya a <strong>Ajustes &gt; Perfil descargado</strong>.</li>
               <li>Pulse <strong>Instalar</strong> y autorice la administración del sistema.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+          <button type="button" className="btn-primary w-full" onClick={onClose}>Entendido</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// Android MDM Enrollment Modal
+// ══════════════════════════════════════════════════════════
+interface AndroidMdmEnrollModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apiUrl: string;
+}
+
+function AndroidMdmEnrollModal({ isOpen, onClose, apiUrl }: AndroidMdmEnrollModalProps) {
+  if (!isOpen) return null;
+
+  const downloadUrl = `${apiUrl}/app-debug.apk`;
+  const checksum = "PV5Go8TLPphfhPeto1hKR7kzIySrFy2HSBvdP1oBUA4";
+  
+  const qrPayload = {
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.codecraft.control/com.codecraft.control.DeviceAdminRcvr",
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": downloadUrl,
+    "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": checksum,
+    "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true
+  };
+
+  const qrString = JSON.stringify(qrPayload);
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content" style={{ maxWidth: '480px', padding: '24px' }}>
+        <div className="modal-header" style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '6px', borderRadius: '6px' }}>
+              <Smartphone size={16} />
+            </div>
+            <h2 className="modal-title" style={{ fontSize: '16px', margin: 0 }}>Inscripción de Dispositivo Android</h2>
+          </div>
+          <button className="icon-btn" onClick={onClose}><X size={16}/></button>
+        </div>
+
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', textAlign: 'center', padding: '10px 0' }}>
+          <p style={{ color: 'var(--t3)', fontSize: '13px', margin: 0, lineHeight: '1.4' }}>
+            Toque 6 veces seguidas la pantalla de bienvenida del celular restablecido de fábrica y escanee este código QR para autoinstalar la app de protección.
+          </p>
+
+          <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <QRCodeSVG value={qrString} size={180} />
+          </div>
+
+          <div style={{ width: '100%', textAlign: 'left', background: 'var(--bg-card)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px' }}>
+            <strong style={{ display: 'block', marginBottom: '6px', color: 'var(--t1)' }}>Instrucciones de Provisión:</strong>
+            <ol style={{ margin: 0, paddingLeft: '20px', color: 'var(--t2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <li>Enciende el celular Android en su pantalla de bienvenida inicial.</li>
+              <li>Toca <strong>6 veces seguidas</strong> la pantalla en el mismo punto vacío.</li>
+              <li>Conéctate a una red Wi-Fi cuando el asistente lo solicite.</li>
+              <li>Apunta la cámara para escanear este código QR.</li>
+              <li>El sistema descargará e instalará la app como administrador absoluto.</li>
             </ol>
           </div>
         </div>
