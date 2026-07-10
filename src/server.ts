@@ -44,3 +44,5 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 app.listen(PORT as number, '0.0.0.0', () => {
   console.log(`Servidor de control de dispositivos iniciado en el puerto ${PORT} (Entorno: ${process.env.NODE_ENV || 'development'})`);
 });
+
+// Trigger redeploy: force fresh clean rebuild on Render
