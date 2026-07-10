@@ -416,33 +416,38 @@ export default function App() {
 
   if (!authToken) {
     return (
-      <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="panel" style={{ width: '100%', maxWidth: '400px', padding: '30px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{ display: 'inline-flex', background: 'var(--indigo-dim)', color: 'var(--indigo)', padding: '12px', borderRadius: '50%', marginBottom: '16px' }}>
-              <Lock size={24} />
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="login-logo">
+            <div className="login-logo-icon">
+              <ShieldCheck size={26} />
             </div>
-            <h2 style={{ margin: 0, fontSize: '20px' }}>FinControl</h2>
-            <p style={{ color: 'var(--t3)', margin: '4px 0 0 0', fontSize: '13px' }}>Inicia sesión para continuar</p>
+            <div>
+              <h1 className="login-title">FinControl</h1>
+              <p className="login-sub">Sistema de Créditos Móviles</p>
+            </div>
           </div>
           {loginError && (
-            <div style={{ background: 'var(--rose-dim)', color: 'var(--rose)', padding: '10px', borderRadius: 'var(--r)', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: 'var(--rose-dim)', color: 'var(--rose)', padding: '10px 14px', borderRadius: 'var(--r)', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(244,63,94,.2)' }}>
               <AlertTriangle size={14} /> {loginError}
             </div>
           )}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
               <label className="field-label">Correo electrónico</label>
-              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="field-input" required />
+              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="field-input" placeholder="admin@empresa.com" required />
             </div>
             <div>
               <label className="field-label">Contraseña</label>
-              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="field-input" required />
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="field-input" placeholder="••••••••" required />
             </div>
-            <button type="submit" className="btn-primary" style={{ marginTop: '8px', padding: '10px' }}>
-              Entrar al Sistema
+            <button type="submit" className="btn-primary" style={{ marginTop: '6px', padding: '11px', fontSize: '14px', letterSpacing: '-.01em' }}>
+              <Lock size={15} /> Entrar al Sistema
             </button>
           </form>
+          <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--t3)', marginTop: '20px' }}>
+            Acceso seguro · CodeCraft © 2025
+          </p>
         </div>
       </div>
     );
@@ -525,36 +530,32 @@ export default function App() {
         <header className="topbar">
           <div className="topbar-left">
             <h1 className="page-title">{viewTitles[view]}</h1>
+            <div className="topbar-status">
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--emerald)', display: 'inline-block', boxShadow: '0 0 6px var(--emerald)' }} />
+              EN LÍNEA
+            </div>
           </div>
           <div className="topbar-right">
-            {/* Theme toggle in topbar when sidebar closed - hidden, now in sidebar */}
-            {false && (
-              <button
-                className="theme-toggle"
-                onClick={toggleTheme}
-                title="Cambiar tema"
-              >
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            )}
             {view === 'credits' && (
               <button className="btn-primary" onClick={() => setShowModal(true)} id="btn-register-sale">
                 <Plus size={15} /> Registrar Venta
               </button>
             )}
             <div className="topbar-user">
-              <div className="user-avatar"><User size={12} /></div>
+              <div className="user-avatar"><User size={13} /></div>
               <div>
                 <div className="user-name">Administrador</div>
+                <div className="user-role">Admin</div>
               </div>
             </div>
             <button 
               className="btn-outline" 
               onClick={handleLogout} 
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', fontSize: '13px', marginLeft: '12px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '12px' }}
+              title="Cerrar sesión"
             >
-              <LogOut size={14} />
-              Cerrar sesión
+              <LogOut size={13} />
+              Salir
             </button>
           </div>
         </header>
@@ -565,7 +566,7 @@ export default function App() {
           {/* ══ DASHBOARD ══════════════════════════════════════ */}
           {view === 'dashboard' && (
             <div className="view-fade">
-              {/* Stats */}
+              {/* Stats — Bento premium */}
               <div className="stats-grid">
                 <div className="stat-card accent-indigo">
                   <div className="stat-icon"><Smartphone size={20} /></div>
@@ -573,6 +574,7 @@ export default function App() {
                     <p className="stat-label">Total créditos</p>
                     <p className="stat-value">{stats.total}</p>
                     <span className="stat-sub">{stats.completed} completados</span>
+                    {stats.total > 0 && <span className="stat-trend up">↑ {((stats.active/Math.max(stats.total,1))*100).toFixed(0)}% activos</span>}
                   </div>
                 </div>
                 <div className="stat-card accent-emerald">
@@ -581,6 +583,7 @@ export default function App() {
                     <p className="stat-label">Al corriente</p>
                     <p className="stat-value">{stats.active}</p>
                     <span className="stat-sub">Sin mora activa</span>
+                    {stats.active > 0 && <span className="stat-trend up">✓ Pagos al día</span>}
                   </div>
                 </div>
                 <div className="stat-card accent-rose">
@@ -588,17 +591,19 @@ export default function App() {
                   <div className="stat-info">
                     <p className="stat-label">En mora</p>
                     <p className="stat-value">{stats.overdue}</p>
-                    <span className="stat-sub">{stats.alertCount} críticas</span>
+                    <span className="stat-sub">{stats.alertCount} críticas (+2 días)</span>
+                    {stats.overdue > 0 && <span className="stat-trend down">⚠ Requiere acción</span>}
                   </div>
                 </div>
                 <div className="stat-card accent-violet">
                   <div className="stat-icon"><TrendingUp size={20} /></div>
                   <div className="stat-info">
                     <p className="stat-label">Recaudado</p>
-                    <p className="stat-value" style={{ fontSize: stats.collected > 9999999 ? '16px' : '22px' }}>
+                    <p className="stat-value" style={{ fontSize: stats.collected > 9999999 ? '15px' : stats.collected > 999999 ? '18px' : '24px' }}>
                       {fmtCOP(stats.collected)}
                     </p>
                     <span className="stat-sub">Total cobrado</span>
+                    <span className="stat-trend up">💰 Ingresos acumulados</span>
                   </div>
                 </div>
               </div>
@@ -617,14 +622,14 @@ export default function App() {
                   </div>
                   <div className="panel-body">
                     <label className="field-label">Dispositivo seleccionado</label>
-                    <div className="device-display">
+                    <div className={`device-display${selectedDevice ? ' has-device' : ''}`}>
                       {selectedDevice
                         ? <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '9px', background: selectedDevice.device_type === 'ios' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: selectedDevice.device_type === 'ios' ? '#818CF8' : '#34D399', padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className={`device-type-tag ${selectedDevice.device_type === 'ios' ? 'ios' : 'android'}`}>
                                 {selectedDevice.device_type || 'android'}
                               </span>
-                              <span>{selectedDevice.brand} {selectedDevice.model}</span>
+                              <span style={{ fontWeight: 600 }}>{selectedDevice.brand} {selectedDevice.model}</span>
                             </div>
                             <span className="code-chip">{selectedDevice.serial_number}</span>
                           </>
@@ -733,7 +738,7 @@ export default function App() {
                         >
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '9px', background: dev.device_type === 'ios' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: dev.device_type === 'ios' ? '#818CF8' : '#34D399', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                              <span className={`device-type-tag ${dev.device_type === 'ios' ? 'ios' : 'android'}`}>
                                 {dev.device_type || 'android'}
                               </span>
                               <div>
@@ -791,7 +796,7 @@ export default function App() {
                     const prog = (paid / sale.total_installments) * 100;
                     const overdueInsts = sale.installments.filter(i => !i.paid && i.overdue);
                     return (
-                      <div key={sale.id} className={`credit-card severity-${sev}`}>
+                      <div key={sale.id} className={`credit-card severity-${sev === 'ok' ? 'ok' : sev}`}>
                         {/* Header */}
                         <div className="credit-header">
                           <div className="credit-device-info">
@@ -1468,7 +1473,7 @@ function AndroidMdmEnrollModal({ isOpen, onClose, apiUrl }: AndroidMdmEnrollModa
   if (!isOpen) return null;
 
   const downloadUrl = `${apiUrl}/app-debug.apk`;
-  const checksum = "PV5Go8TLPphfhPeto1hKR7kzIySrFy2HSBvdP1oBUA4";
+  const checksum = "0sHMEd7zfN1ACOZYS-dHGLHMFD-CxSOJkQy3PjpHCeU";
   
   const qrPayload = {
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.codecraft.control/com.codecraft.control.DeviceAdminRcvr",
