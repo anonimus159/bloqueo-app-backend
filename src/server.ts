@@ -6,6 +6,7 @@ import deviceRoutes from './routes/deviceRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import mdmRoutes from './routes/mdmRoutes';
 import { rawBodyParser } from './middlewares/plistMiddleware';
+import path from 'path';
 
 dotenv.config();
 
@@ -16,6 +17,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(rawBodyParser); // Middleware para parsear XML Plist de Apple MDM
 app.use(express.json());
+
+// Ruta para descargar el APK de Android de forma directa
+app.get('/app-debug.apk', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/app-debug.apk'));
+});
 
 // Registrar Rutas de la API
 app.use('/api/v1/auth', authRoutes);
