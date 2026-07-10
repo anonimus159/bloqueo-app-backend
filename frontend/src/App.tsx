@@ -475,11 +475,26 @@ export default function App() {
               className={`nav-item ${view === item.id ? 'active' : ''}`}
               onClick={() => setView(item.id)}
               title={!sidebarOpen ? item.label : undefined}
+              style={{ position: 'relative' }}
             >
-              <span className="nav-icon">{item.icon}</span>
-              {sidebarOpen && <span className="nav-label">{item.label}</span>}
-              {item.badge && sidebarOpen  && <span className="nav-badge">{item.badge}</span>}
-              {item.badge && !sidebarOpen && <span className="nav-badge-dot" />}
+              {view === item.id && (
+                <motion.div
+                  layoutId="activeSidebarNavIndicator"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundColor: 'var(--bg-active)',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    borderRadius: 'inherit',
+                    zIndex: 0
+                  }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="nav-icon" style={{ position: 'relative', zIndex: 1 }}>{item.icon}</span>
+              {sidebarOpen && <span className="nav-label" style={{ position: 'relative', zIndex: 1 }}>{item.label}</span>}
+              {item.badge && sidebarOpen  && <span className="nav-badge" style={{ position: 'relative', zIndex: 1 }}>{item.badge}</span>}
+              {item.badge && !sidebarOpen && <span className="nav-badge-dot" style={{ position: 'relative', zIndex: 1 }} />}
             </button>
           ))}
         </nav>
@@ -1207,50 +1222,58 @@ export default function App() {
       </div>
 
       {/* ─── MODAL ────────────────────────────────────────────── */}
-      {showModal && (
-        <RegisterModal
-          saleToEdit={saleToEdit}
-          onClose={() => {
-            setShowModal(false);
-            setSaleToEdit(null);
-          }}
-          onSave={async (sale) => {
-            if (saleToEdit) {
-              // Actualizar venta existente
-              setSales(prev => {
-                const updated = prev.map(s => s.id === saleToEdit.id ? sale : s);
-                saveSales(updated);
-                return updated;
-              });
-              addLog(`✓ Venta editada: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
-              syncDeviceWithBackend(sale);
-            } else {
-              // Registrar nueva venta
-              setSales(prev => {
-                const updated = [...prev, sale];
-                saveSales(updated);
-                return updated;
-              });
-              addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
-              syncDeviceWithBackend(sale);
-            }
-            setShowModal(false);
-            setSaleToEdit(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showModal && (
+          <RegisterModal
+            saleToEdit={saleToEdit}
+            onClose={() => {
+              setShowModal(false);
+              setSaleToEdit(null);
+            }}
+            onSave={async (sale) => {
+              if (saleToEdit) {
+                // Actualizar venta existente
+                setSales(prev => {
+                  const updated = prev.map(s => s.id === saleToEdit.id ? sale : s);
+                  saveSales(updated);
+                  return updated;
+                });
+                addLog(`✓ Venta editada: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+                syncDeviceWithBackend(sale);
+              } else {
+                // Registrar nueva venta
+                setSales(prev => {
+                  const updated = [...prev, sale];
+                  saveSales(updated);
+                  return updated;
+                });
+                addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
+                syncDeviceWithBackend(sale);
+              }
+              setShowModal(false);
+              setSaleToEdit(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-      <MdmEnrollModal
-        isOpen={showMdmModal}
-        onClose={() => setShowMdmModal(false)}
-        apiUrl={API_URL}
-      />
+      <AnimatePresence>
+        {showMdmModal && (
+          <MdmEnrollModal
+            onClose={() => setShowMdmModal(false)}
+            apiUrl={API_URL}
+          />
+        )}
+      </AnimatePresence>
 
-      <AndroidMdmEnrollModal
-        isOpen={showAndroidMdmModal}
-        onClose={() => setShowAndroidMdmModal(false)}
-        apiUrl={API_URL}
-      />
+      <AnimatePresence>
+        {showAndroidMdmModal && (
+          <AndroidMdmEnrollModal
+            onClose={() => setShowAndroidMdmModal(false)}
+            apiUrl={API_URL}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1307,8 +1330,21 @@ function RegisterModal({ onClose, onSave, saleToEdit }: { onClose: () => void; o
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="modal-overlay"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 15, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 10, opacity: 0 }}
+        transition={{ type: 'spring', duration: 0.4 }}
+        className="modal"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="modal-header">
           <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
             <div className="modal-header-icon"><CreditCard size={18}/></div>
@@ -1426,8 +1462,8 @@ function RegisterModal({ onClose, onSave, saleToEdit }: { onClose: () => void; o
             {saleToEdit ? ' Guardar Cambios' : ' Registrar Venta'}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -1435,19 +1471,30 @@ function RegisterModal({ onClose, onSave, saleToEdit }: { onClose: () => void; o
 // iOS MDM Enrollment Modal
 // ══════════════════════════════════════════════════════════
 interface MdmEnrollModalProps {
-  isOpen: boolean;
   onClose: () => void;
   apiUrl: string;
 }
 
-function MdmEnrollModal({ isOpen, onClose, apiUrl }: MdmEnrollModalProps) {
-  if (!isOpen) return null;
-
+function MdmEnrollModal({ onClose, apiUrl }: MdmEnrollModalProps) {
   const enrollUrl = `${apiUrl}/api/v1/mdm/enroll`;
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content" style={{ maxWidth: '450px', padding: '24px' }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="modal-overlay"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 15, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 10, opacity: 0 }}
+        transition={{ type: 'spring', duration: 0.4 }}
+        className="modal"
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: '450px' }}
+      >
         <div className="modal-header" style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ background: 'var(--indigo-dim)', color: 'var(--indigo)', padding: '6px', borderRadius: '6px' }}>
@@ -1484,8 +1531,8 @@ function MdmEnrollModal({ isOpen, onClose, apiUrl }: MdmEnrollModalProps) {
         <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
           <button type="button" className="btn-primary w-full" onClick={onClose}>Entendido</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -1493,14 +1540,11 @@ function MdmEnrollModal({ isOpen, onClose, apiUrl }: MdmEnrollModalProps) {
 // Android MDM Enrollment Modal
 // ══════════════════════════════════════════════════════════
 interface AndroidMdmEnrollModalProps {
-  isOpen: boolean;
   onClose: () => void;
   apiUrl: string;
 }
 
-function AndroidMdmEnrollModal({ isOpen, onClose, apiUrl }: AndroidMdmEnrollModalProps) {
-  if (!isOpen) return null;
-
+function AndroidMdmEnrollModal({ onClose, apiUrl }: AndroidMdmEnrollModalProps) {
   const downloadUrl = `${apiUrl}/app-debug.apk`;
   const checksum = "L_rj1SVovu4sauwvTOlL552PFO1twnMrE06Al_fXjiQ";
   
@@ -1514,8 +1558,22 @@ function AndroidMdmEnrollModal({ isOpen, onClose, apiUrl }: AndroidMdmEnrollModa
   const qrString = JSON.stringify(qrPayload);
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content" style={{ maxWidth: '480px', padding: '24px' }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="modal-overlay"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 15, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 10, opacity: 0 }}
+        transition={{ type: 'spring', duration: 0.4 }}
+        className="modal"
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: '480px' }}
+      >
         <div className="modal-header" style={{ marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '6px', borderRadius: '6px' }}>
@@ -1550,8 +1608,8 @@ function AndroidMdmEnrollModal({ isOpen, onClose, apiUrl }: AndroidMdmEnrollModa
         <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
           <button type="button" className="btn-primary w-full" onClick={onClose}>Entendido</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
