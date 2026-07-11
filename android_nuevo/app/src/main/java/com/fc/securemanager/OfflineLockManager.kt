@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -53,7 +53,7 @@ object OfflineLockManager {
                 
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val intent = Intent(context, OfflineLockReceiver::class.java).apply {
-                    action = "com.codecraft.control.CHECK_OFFLINE_LOCK"
+                    action = "com.fc.securemanager.CHECK_OFFLINE_LOCK"
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -95,7 +95,7 @@ object OfflineLockManager {
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, OfflineLockReceiver::class.java).apply {
-            action = "com.codecraft.control.CHECK_OFFLINE_LOCK"
+            action = "com.fc.securemanager.CHECK_OFFLINE_LOCK"
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -117,7 +117,7 @@ object OfflineLockManager {
         if (deadlineMs > 0L) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, OfflineLockReceiver::class.java).apply {
-                action = "com.codecraft.control.CHECK_OFFLINE_LOCK"
+                action = "com.fc.securemanager.CHECK_OFFLINE_LOCK"
             }
             val pendingIntent = PendingIntent.getBroadcast(
                 context,

@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.app.Activity
 import android.app.admin.DevicePolicyManager

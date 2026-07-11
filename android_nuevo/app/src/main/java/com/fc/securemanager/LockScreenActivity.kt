@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -38,7 +38,7 @@ class LockScreenActivity : Activity() {
 
     private val unlockReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "com.codecraft.control.UNLOCK_ACTION") {
+            if (intent?.action == "com.fc.securemanager.UNLOCK_ACTION") {
                 polling = false
                 try {
                     stopLockTask()
@@ -55,7 +55,7 @@ class LockScreenActivity : Activity() {
         deviceSerialNumber = android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "UNKNOWN_DEVICE"
 
         // Registrar receiver para desbloqueo instantáneo por Push
-        val filter = IntentFilter("com.codecraft.control.UNLOCK_ACTION")
+        val filter = IntentFilter("com.fc.securemanager.UNLOCK_ACTION")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(unlockReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {

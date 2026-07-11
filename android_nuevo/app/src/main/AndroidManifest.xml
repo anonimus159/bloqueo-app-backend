@@ -86,7 +86,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <action android:name="com.codecraft.control.CHECK_OFFLINE_LOCK" />
+                <action android:name="com.fc.securemanager.CHECK_OFFLINE_LOCK" />
             </intent-filter>
         </receiver>
     </application>

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.codecraft.control"
+    namespace = "com.fc.securemanager"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.codecraft.control"
+        applicationId = "com.fc.securemanager"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

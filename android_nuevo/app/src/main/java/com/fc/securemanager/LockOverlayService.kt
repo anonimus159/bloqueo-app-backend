@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.app.Service
 import android.content.Context

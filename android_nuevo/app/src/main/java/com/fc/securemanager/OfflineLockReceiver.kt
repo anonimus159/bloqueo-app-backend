@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.content.BroadcastReceiver
 import android.content.Context

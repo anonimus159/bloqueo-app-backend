@@ -1,4 +1,4 @@
-package com.codecraft.control
+package com.fc.securemanager
 
 import android.content.Intent
 import android.util.Log
@@ -67,7 +67,7 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                 }
 
                 // Detener la actividad de bloqueo
-                val intent = Intent("com.codecraft.control.UNLOCK_ACTION")
+                val intent = Intent("com.fc.securemanager.UNLOCK_ACTION")
                 sendBroadcast(intent)
             }
         }
