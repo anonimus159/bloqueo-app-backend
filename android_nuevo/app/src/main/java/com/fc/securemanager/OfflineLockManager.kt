@@ -206,13 +206,7 @@ object OfflineLockManager {
         // Aplicar restricciones empresariales (barra de estado, ajustes, etc.)
         applyEnterpriseLockPolicies(context, true)
 
-        // Iniciar LockOverlayService
-        try {
-            val overlayIntent = Intent(context, LockOverlayService::class.java)
-            context.startService(overlayIntent)
-        } catch (e: Exception) {
-            Log.e(TAG, "No se pudo iniciar LockOverlayService: ${e.message}")
-        }
+
 
         // Iniciar LockScreenActivity
         try {

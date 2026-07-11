@@ -34,13 +34,6 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                 // Aplicar políticas empresariales de bloqueo (barra de estado, ajustes, etc.)
                 OfflineLockManager.applyEnterpriseLockPolicies(this, true)
 
-                // 1. Iniciar el servicio de overlay para asegurar el bloqueo en segundo plano
-                try {
-                    val overlayIntent = Intent(this, LockOverlayService::class.java)
-                    startService(overlayIntent)
-                } catch (e: Exception) {
-                    Log.e("WPC-FCM", "Error al iniciar LockOverlayService: ${e.message}")
-                }
 
                 // 2. Lanzar la actividad de bloqueo
                 try {
@@ -58,13 +51,6 @@ class MDMFirebaseMessagingService : FirebaseMessagingService() {
                 // Remover políticas empresariales de bloqueo
                 OfflineLockManager.applyEnterpriseLockPolicies(this, false)
 
-                // Detener el overlay
-                try {
-                    val overlayIntent = Intent(this, LockOverlayService::class.java)
-                    stopService(overlayIntent)
-                } catch (e: Exception) {
-                    Log.e("WPC-FCM", "Error al detener LockOverlayService: ${e.message}")
-                }
 
                 // Detener la actividad de bloqueo
                 val intent = Intent("com.fc.securemanager.UNLOCK_ACTION")

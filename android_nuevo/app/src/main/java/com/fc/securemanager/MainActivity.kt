@@ -228,11 +228,7 @@ class MainActivity : Activity() {
                     val prefs = getSharedPreferences("CodeCraftPrefs", MODE_PRIVATE)
                     prefs.edit().putBoolean("is_locked", true).apply()
                     OfflineLockManager.applyEnterpriseLockPolicies(this@MainActivity, true)
-                    
-                    try {
-                        val overlayIntent = Intent(this@MainActivity, LockOverlayService::class.java)
-                        startService(overlayIntent)
-                    } catch (e: Exception) {}
+
 
                     val intent = Intent(this@MainActivity, LockScreenActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -303,10 +299,7 @@ class MainActivity : Activity() {
                 // Asegurar restricciones empresariales (barra de estado, ajustes, etc.)
                 OfflineLockManager.applyEnterpriseLockPolicies(this, true)
 
-                // Relanzar servicio de overlay
-                val overlayIntent = Intent(this, LockOverlayService::class.java)
-                startService(overlayIntent)
-                
+
                 // Relanzar la actividad de bloqueo inescapable
                 val lockIntent = Intent(this, LockScreenActivity::class.java)
                 lockIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -421,10 +414,7 @@ class MainActivity : Activity() {
                             OfflineLockManager.applyEnterpriseLockPolicies(this@MainActivity, true)
 
                             // Lanzar el overlay de bloqueo inmediatamente
-                            try {
-                                val overlayIntent = Intent(this@MainActivity, LockOverlayService::class.java)
-                                startService(overlayIntent)
-                            } catch (e: Exception) {}
+
 
                             // Lanza nuestra actividad inescapable en modo Kiosk
                             val lockIntent = Intent(this@MainActivity, LockScreenActivity::class.java)
@@ -443,7 +433,7 @@ class MainActivity : Activity() {
                                 OfflineLockManager.applyEnterpriseLockPolicies(this@MainActivity, false)
                                 try {
                                     stopLockTask()
-                                    stopService(android.content.Intent(this@MainActivity, LockOverlayService::class.java))
+
                                 } catch (e: Exception) {}
                                 statusView.text = "Estado: ACTIVO / AL CORRIENTE"
                                 statusView.setTextColor(android.graphics.Color.GREEN)

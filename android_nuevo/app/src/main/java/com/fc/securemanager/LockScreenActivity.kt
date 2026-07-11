@@ -267,10 +267,7 @@ class LockScreenActivity : Activity() {
                         prefs.edit().putBoolean("is_locked", false).apply()
                         applyGracePeriod()
                         OfflineLockManager.applyEnterpriseLockPolicies(this@LockScreenActivity, false)
-                        try {
-                            val overlayIntent = Intent(this@LockScreenActivity, LockOverlayService::class.java)
-                            stopService(overlayIntent)
-                        } catch (e: Exception) {}
+
                         Toast.makeText(this@LockScreenActivity, "Acceso verificado con éxito.", Toast.LENGTH_LONG).show()
                         runOnUiThread {
                             try { stopLockTask() } catch (e: Exception) {}
@@ -503,11 +500,7 @@ class LockScreenActivity : Activity() {
                             // Remover restricciones empresariales
                             OfflineLockManager.applyEnterpriseLockPolicies(this@LockScreenActivity, false)
 
-                            // Detener el overlay
-                            try {
-                                val overlayIntent = Intent(this@LockScreenActivity, LockOverlayService::class.java)
-                                stopService(overlayIntent)
-                            } catch (e: Exception) {}
+
 
                             runOnUiThread {
                                 try {
