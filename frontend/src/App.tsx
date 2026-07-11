@@ -2,7 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { CinematicLogin } from './components/CinematicLogin';
 import { BentoDashboard } from './components/BentoDashboard';
 import { DeviceLogs } from './components/DeviceLogs';
-import { useAppStore, CreditSale, Installment, PaymentFrequency, ActiveView } from './store/useAppStore';
+import { CommandPalette } from './components/CommandPalette';
+import { NotificationCenter } from './components/NotificationCenter';
+import { useAppStore, CreditSale, Installment, PaymentFrequency, ActiveView, Device } from './store/useAppStore';
 import { 
   BarChart2, CreditCard, Zap, ShieldCheck, 
   Smartphone, Plus, Calendar, Lock, Unlock,
@@ -68,7 +70,18 @@ function getDueSeverity(sale: CreditSale): 'ok' | 'warning' | 'alert' {
 // ══════════════════════════════════════════════════════════
 
 export default function App() {
-  const { authToken, theme, view, setView, sidebarOpen, setSidebarOpen, devices, setDevices, sales, setSales, selectedDevice, setSelectedDevice, addLog, logout, toggleTheme } = useAppStore();
+  const {
+    authToken, setAuthToken, logout,
+    theme, toggleTheme,
+    view, setView,
+    sidebarOpen, setSidebarOpen,
+    isNotificationCenterOpen, setNotificationCenterOpen,
+    setCommandPaletteOpen,
+    devices, setDevices,
+    sales, setSales,
+    selectedDevice, setSelectedDevice,
+    addLog, clearLogs
+  } = useAppStore();
 
   const [cmdType, setCmdType] = useState<'lock' | 'unlock' | 'wipe'>('lock');
   const [cmdPayload, setCmdPayload] = useState('Por favor, realice el pago de su cuota para reactivar el terminal.');
@@ -277,6 +290,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <CommandPalette />
       {/* ─── Sidebar ─────────────────────────────────────────── */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-brand">
@@ -378,6 +392,24 @@ export default function App() {
                 <Plus size={15} /> Registrar Venta
               </button>
             )}
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="btn-ghost" 
+                style={{ position: 'relative', padding: '6px' }}
+                onClick={() => setNotificationCenterOpen(!isNotificationCenterOpen)}
+              >
+                <Bell size={18} />
+                {stats.alertCount > 0 && <span className="nav-badge-dot" style={{ top: '4px', right: '4px' }} />}
+              </button>
+              <NotificationCenter />
+            </div>
+            <button 
+              className="btn-outline" 
+              onClick={() => setCommandPaletteOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', fontSize: '11px', color: 'var(--t3)' }}
+            >
+              <Search size={12} /> <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>Ctrl+K</span>
+            </button>
             <div className="topbar-user">
               <div className="user-avatar"><User size={13} /></div>
               <div>
@@ -404,11 +436,12 @@ export default function App() {
             {view === 'dashboard' && (
               <motion.div
                 key="dashboard"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ type: 'spring', duration: 0.35 }}
+                initial={{ opacity: 0, y: 15, scale: 0.98, rotateX: 5 }}
+                animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                 className="view-fade"
+                style={{ transformPerspective: 1200 }}
               >
                 <BentoDashboard />
                 <div style={{ marginTop: '24px', padding: '0 24px' }}>
