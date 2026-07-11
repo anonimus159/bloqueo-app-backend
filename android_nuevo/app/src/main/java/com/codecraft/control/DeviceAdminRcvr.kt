@@ -44,11 +44,14 @@ class DeviceAdminRcvr : DeviceAdminReceiver() {
             Log.e("DeviceAdminRcvr", "Error al aplicar políticas en aprovisionamiento: ${e.message}")
         }
 
-        // Lanzar MainActivity para cerrar el Setup Wizard de Google y mostrar la app
-        val launchIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // En Android 10+ (Q), no debemos iniciar la UI manualmente desde aquí.
+        // El Setup Wizard se encarga de iniciar MainActivity con la acción ADMIN_POLICY_COMPLIANCE.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val launchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            context.startActivity(launchIntent)
         }
-        context.startActivity(launchIntent)
     }
 
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence? {
