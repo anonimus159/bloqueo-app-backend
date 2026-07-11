@@ -4,7 +4,7 @@ import { BentoDashboard } from './components/BentoDashboard';
 import { DeviceLogs } from './components/DeviceLogs';
 import { CommandPalette } from './components/CommandPalette';
 import { NotificationCenter } from './components/NotificationCenter';
-import { useAppStore, CreditSale, Installment, PaymentFrequency, ActiveView, Device } from './store/useAppStore';
+import { useAppStore, CreditSale, Installment, PaymentFrequency, ActiveView } from './store/useAppStore';
 import { 
   BarChart2, CreditCard, Zap, ShieldCheck, 
   Smartphone, Plus, Calendar, Lock, Unlock,
@@ -71,7 +71,7 @@ function getDueSeverity(sale: CreditSale): 'ok' | 'warning' | 'alert' {
 
 export default function App() {
   const {
-    authToken, setAuthToken, logout,
+    authToken, logout,
     theme, toggleTheme,
     view, setView,
     sidebarOpen, setSidebarOpen,
@@ -80,7 +80,7 @@ export default function App() {
     devices, setDevices,
     sales, setSales,
     selectedDevice, setSelectedDevice,
-    addLog, clearLogs
+    addLog
   } = useAppStore();
 
   const [cmdType, setCmdType] = useState<'lock' | 'unlock' | 'wipe'>('lock');

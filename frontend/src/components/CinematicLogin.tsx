@@ -81,20 +81,40 @@ export const CinematicLogin: React.FC = () => {
         setAuthToken(data.token);
       } else {
         setError(data.error || 'Credenciales inválidas');
+        // Glitch effect on error
         anime({
           targets: cardRef.current,
-          translateX: [0, -10, 10, -10, 10, 0],
-          duration: 500,
-          easing: 'easeInOutQuad'
+          translateX: [
+            { value: -10, duration: 50 },
+            { value: 10, duration: 50 },
+            { value: -5, duration: 50 },
+            { value: 5, duration: 50 },
+            { value: 0, duration: 50 }
+          ],
+          rotate: [
+            { value: -1, duration: 50 },
+            { value: 1, duration: 50 },
+            { value: 0, duration: 50 }
+          ],
+          easing: 'linear'
+        });
+        anime({
+          targets: '.login-input',
+          borderColor: ['var(--border)', 'var(--rose)', 'var(--border)', 'var(--rose)'],
+          duration: 300,
+          easing: 'linear'
         });
       }
     } catch (err) {
       setError('Error de conexión con el servidor');
       anime({
         targets: cardRef.current,
-        translateX: [0, -10, 10, -10, 10, 0],
-        duration: 500,
-        easing: 'easeInOutQuad'
+        translateX: [
+          { value: -10, duration: 50 },
+          { value: 10, duration: 50 },
+          { value: 0, duration: 50 }
+        ],
+        easing: 'linear'
       });
     } finally {
       setIsLoggingIn(false);
@@ -102,7 +122,7 @@ export const CinematicLogin: React.FC = () => {
   };
 
   return (
-    <div className="login-wrapper" style={{ 
+    <div className="login-wrapper app-shell" style={{ 
       minHeight: '100vh', 
       display: 'flex', 
       alignItems: 'center', 
@@ -199,6 +219,7 @@ export const CinematicLogin: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="admin@codecraft.com"
+                className="login-input"
                 style={{
                   width: '100%',
                   background: 'var(--bg-input)',
@@ -208,7 +229,7 @@ export const CinematicLogin: React.FC = () => {
                   borderRadius: 'var(--r)',
                   fontSize: '15px',
                   outline: 'none',
-                  transition: 'border-color var(--dur), box-shadow var(--dur)'
+                  transition: 'box-shadow var(--dur)'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = 'var(--indigo)';
@@ -234,6 +255,7 @@ export const CinematicLogin: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
+                className="login-input"
                 style={{
                   width: '100%',
                   background: 'var(--bg-input)',
@@ -243,7 +265,7 @@ export const CinematicLogin: React.FC = () => {
                   borderRadius: 'var(--r)',
                   fontSize: '15px',
                   outline: 'none',
-                  transition: 'border-color var(--dur), box-shadow var(--dur)'
+                  transition: 'box-shadow var(--dur)'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = 'var(--indigo)';

@@ -1,16 +1,15 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 // @ts-ignore
 import anime from 'animejs';
-import { 
-  Smartphone, 
-  ShieldCheck, 
-  AlertTriangle, 
-  Lock, 
-  DollarSign, 
+import {
   Activity,
   Users,
   TrendingUp,
-  Plus
+  AlertTriangle,
+  Lock,
+  DollarSign,
+  Plus,
+  Smartphone
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -29,12 +28,12 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts';
-import { useAppStore, CreditSale } from '../store/useAppStore';
+import { useAppStore } from '../store/useAppStore';
 
 const COLORS = ['#10b981', '#f59e0b', '#f43f5e', '#6366f1']; // Emerald, Amber, Rose, Indigo
 
 export const BentoDashboard: React.FC = () => {
-  const { sales, view, setView } = useAppStore();
+  const { sales, setView } = useAppStore();
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Handle Parallax Hover
