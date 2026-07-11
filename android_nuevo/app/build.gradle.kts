@@ -19,10 +19,10 @@ android {
 
     signingConfigs {
         create("customSign") {
-            storeFile = file("custom.keystore")
-            storePassword = "CodeCraftSecure2026"
-            keyAlias = "custom_alias"
-            keyPassword = "CodeCraftSecure2026"
+            storeFile = file("new_secure_keystore.jks")
+            storePassword = "newpassword123"
+            keyAlias = "new_secure_key"
+            keyPassword = "newpassword123"
         }
     }
 
