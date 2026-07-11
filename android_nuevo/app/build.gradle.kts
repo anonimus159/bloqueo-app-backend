@@ -17,8 +17,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("customSign") {
+            storeFile = file("custom.keystore")
+            storePassword = "CodeCraftSecure2026"
+            keyAlias = "custom_alias"
+            keyPassword = "CodeCraftSecure2026"
+        }
+    }
+
     buildTypes {
-        release {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("customSign")
+        }
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("customSign")
             optimization {
                 enable = false
             }
