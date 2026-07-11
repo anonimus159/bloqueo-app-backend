@@ -1,35 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import {
-  Smartphone,
-  ShieldCheck,
-  Lock,
-  Unlock,
-  Search,
-  Send,
-  AlertTriangle,
-  DollarSign,
-  User,
-  CheckCircle2,
-  XCircle,
-  Plus,
-  Calendar,
-  Bell,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  CreditCard,
-  Home,
-  Clock,
-  TrendingUp,
-  Sun,
-  Moon,
-  PanelLeft,
-  Zap,
-  BarChart2,
-  Activity,
-  Edit,
-  LogOut,
-  Laptop,
+import { CinematicLogin } from './components/CinematicLogin';
+import { BentoDashboard } from './components/BentoDashboard';
+import { DeviceLogs } from './components/DeviceLogs';
+import { useAppStore, CreditSale, Installment, PaymentFrequency, ActiveView } from './store/useAppStore';
+import { 
+  BarChart2, CreditCard, Zap, ShieldCheck, 
+  Smartphone, Plus, Calendar, Lock, Unlock,
+  AlertTriangle, Search, CheckCircle2, XCircle, LogOut, Send, DollarSign, User,
+  ChevronLeft, ChevronRight, X, Home, Clock, Sun, Moon, PanelLeft, Laptop, Bell, Edit,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,40 +16,6 @@ const API_URL = (typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
   ? 'http://localhost:3000'
   : 'https://bloqueo-app-backend.onrender.com';
-
-// ══════════════════════════════════════════════════════════
-// Types
-// ══════════════════════════════════════════════════════════
-
-type Theme = 'dark' | 'light';
-type ActiveView = 'dashboard' | 'credits' | 'calendar' | 'alerts';
-type PaymentFrequency = 'weekly' | 'biweekly' | 'monthly';
-
-interface Device {
-  id: string; serial_number: string; imei: string;
-  brand: string; model: string;
-  status: 'active' | 'locked' | 'suspended';
-  customer_name: string; customer_phone: string; last_sync_at: string;
-  device_type?: 'android' | 'ios';
-  udid?: string;
-  push_magic?: string;
-}
-
-interface Installment {
-  number: number; due_date: string; amount: number;
-  paid: boolean; paid_at?: string; overdue: boolean; days_overdue: number;
-}
-
-interface CreditSale {
-  id: string; device_brand: string; device_model: string;
-  serial_number: string; imei: string;
-  customer_name: string; customer_phone: string;
-  sale_price: number; down_payment: number;
-  frequency: PaymentFrequency; total_installments: number;
-  installment_amount: number; start_date: string;
-  installments: Installment[];
-  status: 'active' | 'completed' | 'overdue' | 'locked';
-}
 
 // ══════════════════════════════════════════════════════════
 // Helpers
@@ -117,47 +61,17 @@ function getDueSeverity(sale: CreditSale): 'ok' | 'warning' | 'alert' {
   return Math.max(...ov.map(i => i.days_overdue || 0)) >= 2 ? 'alert' : 'warning';
 }
 
-// Persistence
-function loadSales(): CreditSale[] {
-  try {
-    const raw = localStorage.getItem('fc_sales');
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((s: any) => s && typeof s === 'object' && Array.isArray(s.installments));
-  } catch {
-    return [];
-  }
-}
-function saveSales(s: CreditSale[]) {
-  if (Array.isArray(s)) {
-    localStorage.setItem('fc_sales', JSON.stringify(s));
-  }
-}
-function loadTheme(): Theme {
-  return (localStorage.getItem('fc_theme') as Theme) || 'dark';
-}
+
 
 // ══════════════════════════════════════════════════════════
 // App
 // ══════════════════════════════════════════════════════════
 
 export default function App() {
-  const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('fc_token'));
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { authToken, theme, view, setView, sidebarOpen, setSidebarOpen, devices, setDevices, sales, setSales, selectedDevice, setSelectedDevice, addLog, logout, toggleTheme } = useAppStore();
 
-  const [theme, setTheme] = useState<Theme>(loadTheme);
-  const [view, setView] = useState<ActiveView>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [sales, setSales] = useState<CreditSale[]>(loadSales);
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [cmdType, setCmdType] = useState<'lock' | 'unlock' | 'wipe'>('lock');
   const [cmdPayload, setCmdPayload] = useState('Por favor, realice el pago de su cuota para reactivar el terminal.');
-  const [logs, setLogs] = useState<string[]>(['Sistema listo y escuchando.', 'Servidor iniciado correctamente.']);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showMdmModal, setShowMdmModal] = useState(false);
@@ -166,72 +80,16 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [calDate, setCalDate] = useState(new Date());
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    setIsLoggingIn(true);
-    try {
-      const res = await fetch(`${API_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword })
-      });
-      const data = await res.json();
-      if (res.ok && data.token) {
-        localStorage.setItem('fc_token', data.token);
-        setAuthToken(data.token);
-      } else {
-        setLoginError(data.error || 'Error al iniciar sesión');
-      }
-    } catch (err) {
-      setLoginError('Error de conexión con el servidor');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('fc_token');
-    setAuthToken(null);
-  };
+  const handleLogout = logout;
 
 
-  // Apply theme
+  // toggleTheme is now handled by Zustand completely. But we can leave the local CSS updates here if needed, or simply let the effect handle it.
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('fc_theme', theme);
   }, [theme]);
 
-  // ── Animated theme toggle ────────────────────────────────
-  const toggleTheme = (e: React.MouseEvent) => {
-    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
-    const x = e.clientX;
-    const y = e.clientY;
+  // Persist sales handled by useAppStore
 
-    // Set click origin for CSS animation
-    document.documentElement.style.setProperty('--ripple-x', `${x}px`);
-    document.documentElement.style.setProperty('--ripple-y', `${y}px`);
-
-    // Use View Transitions API if available (modern browsers)
-    if (typeof document.startViewTransition === 'function') {
-      document.startViewTransition(() => {
-        setTheme(nextTheme);
-      });
-    } else {
-      // Fallback: CSS overlay ripple
-      const overlay = document.createElement('div');
-      overlay.className = `theme-ripple-overlay ${nextTheme}`;
-      overlay.style.cssText = `--ox:${x}px;--oy:${y}px`;
-      document.body.appendChild(overlay);
-      overlay.addEventListener('animationend', () => {
-        setTheme(nextTheme);
-        overlay.remove();
-      }, { once: true });
-    }
-  };
-
-  // Persist sales
-  useEffect(() => { saveSales(sales); }, [sales]);
 
   // Recalculate overdue
   useEffect(() => {
@@ -258,7 +116,7 @@ export default function App() {
     try {
       const r = await fetch(`${API_URL}/api/v1/devices`, { headers: { Authorization: `Bearer ${authToken}` } });
       if (r.ok) setDevices(await r.json());
-      else if (r.status === 401 || r.status === 403) setAuthToken(null);
+      else if (r.status === 401 || r.status === 403) logout();
     } catch { /* offline */ }
   };
   useEffect(() => { 
@@ -267,12 +125,6 @@ export default function App() {
     const id = setInterval(fetchDevices, 8000); 
     return () => clearInterval(id); 
   }, [authToken]);
-
-  const addLog = (msg: string) => {
-    const ts = new Date().toLocaleTimeString('es-CO');
-    setLogs(prev => [`${msg}`, ...prev.slice(0, 49)]);
-    void ts;
-  };
 
   const syncDeviceWithBackend = async (sale: CreditSale) => {
     if (!authToken) return;
@@ -420,79 +272,7 @@ export default function App() {
   };
 
   if (!authToken) {
-    return (
-      <div className="login-shell">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="login-card"
-        >
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              <ShieldCheck size={26} />
-            </div>
-            <div>
-              <h1 className="login-title">FinControl</h1>
-              <p className="login-sub">Sistema de Créditos Móviles</p>
-            </div>
-          </div>
-          {loginError && (
-            <div style={{ background: 'var(--rose-dim)', color: 'var(--rose)', padding: '10px 14px', borderRadius: 'var(--r)', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(244,63,94,.2)' }}>
-              <AlertTriangle size={14} /> {loginError}
-            </div>
-          )}
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <label className="field-label">Correo electrónico</label>
-              <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="field-input" placeholder="admin@empresa.com" required disabled={isLoggingIn} />
-            </div>
-            <div>
-              <label className="field-label">Contraseña</label>
-              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="field-input" placeholder="••••••••" required disabled={isLoggingIn} />
-            </div>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={isLoggingIn}
-              style={{
-                marginTop: '6px',
-                padding: '11px',
-                fontSize: '14px',
-                letterSpacing: '-.01em',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {isLoggingIn ? (
-                <>
-                  <svg className="animate-spin" viewBox="0 0 24 24" fill="none" style={{ width: '16px', height: '16px', color: 'white' }}>
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.25 }}></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style={{ opacity: 0.75 }}></path>
-                  </svg>
-                  <span>Conectando...</span>
-                </>
-              ) : (
-                <>
-                  <Lock size={15} /> <span>Entrar al Sistema</span>
-                </>
-              )}
-            </button>
-            {isLoggingIn && (
-              <p style={{ fontSize: '11px', color: 'var(--indigo-light)', textAlign: 'center', marginTop: '4px', lineHeight: '1.4' }}>
-                💡 Despertando servidor en Render...<br />
-                (Esto puede tardar hasta 50s si estaba inactivo).
-              </p>
-            )}
-          </form>
-          <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--t3)', marginTop: '20px' }}>
-            Acceso seguro · CodeCraft © 2025
-          </p>
-        </motion.div>
-      </div>
-    );
+    return <CinematicLogin />;
   }
 
   return (
@@ -630,51 +410,14 @@ export default function App() {
                 transition={{ type: 'spring', duration: 0.35 }}
                 className="view-fade"
               >
-              {/* Stats — Bento premium */}
-              <div className="stats-grid">
-                <div className="stat-card accent-indigo">
-                  <div className="stat-icon"><Smartphone size={20} /></div>
-                  <div className="stat-info">
-                    <p className="stat-label">Total créditos</p>
-                    <p className="stat-value">{stats.total}</p>
-                    <span className="stat-sub">{stats.completed} completados</span>
-                    {stats.total > 0 && <span className="stat-trend up">↑ {((stats.active/Math.max(stats.total,1))*100).toFixed(0)}% activos</span>}
-                  </div>
+                <BentoDashboard />
+                <div style={{ marginTop: '24px', padding: '0 24px' }}>
+                  <DeviceLogs />
                 </div>
-                <div className="stat-card accent-emerald">
-                  <div className="stat-icon"><ShieldCheck size={20} /></div>
-                  <div className="stat-info">
-                    <p className="stat-label">Al corriente</p>
-                    <p className="stat-value">{stats.active}</p>
-                    <span className="stat-sub">Sin mora activa</span>
-                    {stats.active > 0 && <span className="stat-trend up">✓ Pagos al día</span>}
-                  </div>
-                </div>
-                <div className="stat-card accent-rose">
-                  <div className="stat-icon"><AlertTriangle size={20} /></div>
-                  <div className="stat-info">
-                    <p className="stat-label">En mora</p>
-                    <p className="stat-value">{stats.overdue}</p>
-                    <span className="stat-sub">{stats.alertCount} críticas (+2 días)</span>
-                    {stats.overdue > 0 && <span className="stat-trend down">⚠ Requiere acción</span>}
-                  </div>
-                </div>
-                <div className="stat-card accent-violet">
-                  <div className="stat-icon"><TrendingUp size={20} /></div>
-                  <div className="stat-info">
-                    <p className="stat-label">Recaudado</p>
-                    <p className="stat-value" style={{ fontSize: stats.collected > 9999999 ? '15px' : stats.collected > 999999 ? '18px' : '24px' }}>
-                      {fmtCOP(stats.collected)}
-                    </p>
-                    <span className="stat-sub">Total cobrado</span>
-                    <span className="stat-trend up">💰 Ingresos acumulados</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid-2col">
-                {/* Command console */}
-                <div className="panel">
+                
+                <div style={{ padding: '0 24px', marginTop: '24px' }}>
+                  {/* Command console */}
+                  <div className="panel">
                   <div className="panel-header">
                     <Zap size={16} className="text-indigo" />
                     <span>Consola de Comandos</span>
@@ -716,33 +459,6 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-
-                {/* Activity log */}
-                <div className="panel">
-                  <div className="panel-header">
-                    <Activity size={16} className="text-emerald" />
-                    <span>Registro de Actividad</span>
-                    <div className="live-dot" style={{ marginLeft: 'auto' }} />
-                  </div>
-                  <div className="panel-body" style={{ padding: '14px' }}>
-                    <div className="log-console">
-                      {logs.map((log, i) => (
-                        <div key={i} className="log-line">
-                          <span className="log-ts">›</span>
-                          <span className="log-msg">{log}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4" style={{ display:'flex', justifyContent:'space-between', fontSize:'10px', color:'var(--t3)' }}>
-                      <span style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-                        <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'var(--emerald)', display:'inline-block' }}/>
-                        Escucha activa
-                      </span>
-                      <span>Firma ECDSA P-256</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Devices table */}
               <div className="panel mt-6" id="devices-table">
@@ -836,6 +552,7 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
+              </div>
               </div>
             </motion.div>
           )}
@@ -1274,20 +991,12 @@ export default function App() {
             onSave={async (sale) => {
               if (saleToEdit) {
                 // Actualizar venta existente
-                setSales(prev => {
-                  const updated = prev.map(s => s.id === saleToEdit.id ? sale : s);
-                  saveSales(updated);
-                  return updated;
-                });
+                setSales(prev => prev.map(s => s.id === saleToEdit.id ? sale : s));
                 addLog(`✓ Venta editada: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
                 syncDeviceWithBackend(sale);
               } else {
                 // Registrar nueva venta
-                setSales(prev => {
-                  const updated = [...prev, sale];
-                  saveSales(updated);
-                  return updated;
-                });
+                setSales(prev => [...prev, sale]);
                 addLog(`✓ Nueva venta: ${sale.customer_name} — ${sale.device_brand} ${sale.device_model}`);
                 syncDeviceWithBackend(sale);
               }
@@ -1587,7 +1296,7 @@ interface AndroidMdmEnrollModalProps {
 
 function AndroidMdmEnrollModal({ onClose, apiUrl }: AndroidMdmEnrollModalProps) {
   const downloadUrl = `${apiUrl}/app-debug.apk`;
-  const checksum = "5vsQJAw9cZYlKmo7-PHyRxmHCx09VGpUhXuCgH1oQ7I";
+  const checksum = "sp0umu_tmWNaSSfFyaVkB0FuC36h66JXeoLhsYxdTuI";
   
   const qrPayload = {
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.fc.securemanager/com.fc.securemanager.DeviceAdminRcvr",
