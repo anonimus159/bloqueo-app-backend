@@ -1329,7 +1329,7 @@ interface AndroidMdmEnrollModalProps {
 
 function AndroidMdmEnrollModal({ onClose, apiUrl }: AndroidMdmEnrollModalProps) {
   const downloadUrl = `${apiUrl}/app-debug.apk`;
-  const checksum = "9PjAH-YTwozC_krQ6-T6iO0nb_gwIv91guT61b-Pzd0";
+  const checksum = "kCiSoN1wwHpPFJBgkAikFPE8jg6iRWFucEqkQ2tjXM8";
   
   const qrPayload = {
     "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.fc.securemanager/com.fc.securemanager.DeviceAdminRcvr",
