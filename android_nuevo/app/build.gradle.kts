@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fc.securemanager"
+    namespace = "com.workspace.manager"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.fc.securemanager"
+        applicationId = "com.workspace.manager"
         minSdk = 26
         targetSdk = 28
         versionCode = 1
@@ -19,10 +19,10 @@ android {
 
     signingConfigs {
         create("customSign") {
-            storeFile = file("new_secure_keystore.jks")
-            storePassword = "newpassword123"
-            keyAlias = "new_secure_key"
-            keyPassword = "newpassword123"
+            storeFile = file("final_secure_keystore.jks")
+            storePassword = "finalpass123"
+            keyAlias = "final_secure_key"
+            keyPassword = "finalpass123"
         }
     }
 
