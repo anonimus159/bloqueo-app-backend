@@ -2,21 +2,7 @@
 <!-- Políticas de administración nativas que la app solicitará al sistema operativo Android -->
 <device-admin>
     <uses-policies>
-        <!-- Permite configurar reglas de longitud y complejidad de contraseña -->
-        <limit-password />
-        <!-- Permite monitorear intentos fallidos de inicio de sesión -->
-        <watch-login />
-        <!-- Permite restablecer la contraseña de desbloqueo del dispositivo -->
-        <reset-password />
         <!-- Permite forzar el bloqueo inmediato del dispositivo -->
         <force-lock />
-        <!-- Permite realizar el borrado de datos de fábrica (Factory Reset) remoto -->
-        <wipe-data />
-        <!-- Permite definir tiempos de expiración de contraseña -->
-        <expire-password />
-        <!-- Permite obligar al dispositivo a cifrar el almacenamiento local -->
-        <encrypted-storage />
-        <!-- Permite inhabilitar la cámara del dispositivo -->
-        <disable-camera />
     </uses-policies>
 </device-admin>
