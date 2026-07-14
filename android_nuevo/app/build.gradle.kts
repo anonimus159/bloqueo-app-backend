@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.workspace.manager"
         minSdk = 26
-        targetSdk = 28
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
